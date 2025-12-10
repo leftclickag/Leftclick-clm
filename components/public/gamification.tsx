@@ -483,7 +483,7 @@ export function ScoreDisplay({
     };
 
     requestAnimationFrame(animate);
-  }, [score, animated]);
+  }, [score, animated, displayScore]);
 
   const sizeClasses = {
     sm: "text-2xl",

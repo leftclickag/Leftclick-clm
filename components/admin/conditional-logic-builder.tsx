@@ -238,7 +238,7 @@ export function ConditionalLogicBuilder({
                           <span className="text-gray-600">
                             {field?.label || condition.source_field}{" "}
                             <span className="font-medium">{op?.label}</span>{" "}
-                            "{String(condition.target_value)}"
+                            &quot;{String(condition.target_value)}&quot;
                             {condition.condition_type === "branch_to" &&
                               condition.target_step_id && (
                                 <>

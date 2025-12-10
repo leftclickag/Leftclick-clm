@@ -427,7 +427,7 @@ export function EmbedCodeGenerator({
         <CardContent className="prose prose-sm max-w-none">
           <ol className="space-y-2 text-gray-600">
             <li>
-              <strong>Code kopieren:</strong> Klicke auf "Code kopieren" oben
+              <strong>Code kopieren:</strong> Klicke auf &quot;Code kopieren&quot; oben
             </li>
             <li>
               <strong>In Website einfügen:</strong>
@@ -454,7 +454,7 @@ export function EmbedCodeGenerator({
               <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
                 <p className="text-yellow-800 text-sm">
                   <strong>Tipp:</strong> Füge einen Button mit der Klasse{" "}
-                  <code>data-leftclick-trigger="{leadMagnetSlug}"</code> hinzu um
+                  <code>data-leftclick-trigger=&quot;{leadMagnetSlug}&quot;</code> hinzu um
                   das Popup zu öffnen:
                 </p>
                 <pre className="mt-2 text-xs bg-yellow-100 p-2 rounded">
