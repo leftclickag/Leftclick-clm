@@ -3,11 +3,13 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { leadMagnetId: string } }
+  props: { params: Promise<{ leadMagnetId: string }> }
 ) {
   try {
-    const supabase = await createClient();
+    const params = await props.params;
     const { leadMagnetId } = params;
+
+    const supabase = await createClient();
 
     // Get exit intent config
     const { data: config, error } = await supabase

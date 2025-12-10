@@ -40,6 +40,7 @@
     "@trpc/next": "^10.45.2",
     "@trpc/react-query": "^10.45.2",
     "@trpc/server": "^10.45.2",
+    "autoprefixer": "^10.4.17",
     "canvas-confetti": "^1.9.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
@@ -52,12 +53,14 @@
     "next": "^15.5.7",
     "next-themes": "^0.2.1",
     "nodemailer": "^7.0.11",
+    "postcss": "^8.4.33",
     "qrcode": "^1.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.50.1",
     "recharts": "^2.12.0",
     "tailwind-merge": "^2.2.1",
+    "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.22.4",
     "zustand": "^4.5.0"
@@ -69,11 +72,8 @@
     "@types/qrcode": "^1.5.5",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
-    "autoprefixer": "^10.4.17",
     "eslint": "^8.56.0",
     "eslint-config-next": "15.0.3",
-    "postcss": "^8.4.33",
-    "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3"
   }
 }
