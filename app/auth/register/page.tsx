@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc/client";
 import { createClient } from "@/lib/supabase/client";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inviteCodeParam = searchParams.get("code");
@@ -112,128 +112,146 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Registrierung</h1>
-          <p className="text-gray-600">
-            Erstelle deinen Account mit einem Invite Code
-          </p>
+    <Card className="w-full max-w-md p-8">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Registrierung</h1>
+        <p className="text-gray-600">
+          Erstelle deinen Account mit einem Invite Code
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Invite Code */}
+        <div>
+          <Label htmlFor="inviteCode">Invite Code *</Label>
+          <Input
+            id="inviteCode"
+            type="text"
+            value={formData.inviteCode}
+            onChange={(e) =>
+              setFormData({ ...formData, inviteCode: e.target.value.toUpperCase() })
+            }
+            placeholder="INVITE-XXXXXXXXXX"
+            disabled={loading}
+            className={
+              formData.inviteCode.length > 5
+                ? inviteCodeValid
+                  ? "border-green-500"
+                  : inviteCodeValid === false
+                  ? "border-red-500"
+                  : ""
+                : ""
+            }
+          />
+          {validatingCode && (
+            <p className="text-sm text-gray-500 mt-1">Validiere Code...</p>
+          )}
+          {inviteCodeValid && (
+            <p className="text-sm text-green-600 mt-1">✓ Gültiger Invite Code</p>
+          )}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Invite Code */}
-          <div>
-            <Label htmlFor="inviteCode">Invite Code *</Label>
-            <Input
-              id="inviteCode"
-              type="text"
-              value={formData.inviteCode}
-              onChange={(e) =>
-                setFormData({ ...formData, inviteCode: e.target.value.toUpperCase() })
-              }
-              placeholder="INVITE-XXXXXXXXXX"
-              disabled={loading}
-              className={
-                formData.inviteCode.length > 5
-                  ? inviteCodeValid
-                    ? "border-green-500"
-                    : inviteCodeValid === false
-                    ? "border-red-500"
-                    : ""
-                  : ""
-              }
-            />
-            {validatingCode && (
-              <p className="text-sm text-gray-500 mt-1">Validiere Code...</p>
-            )}
-            {inviteCodeValid && (
-              <p className="text-sm text-green-600 mt-1">✓ Gültiger Invite Code</p>
-            )}
+        {/* Name */}
+        <div>
+          <Label htmlFor="name">Name *</Label>
+          <Input
+            id="name"
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder="Max Mustermann"
+            disabled={loading}
+          />
+        </div>
+
+        {/* Email */}
+        <div>
+          <Label htmlFor="email">E-Mail *</Label>
+          <Input
+            id="email"
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            placeholder="max@beispiel.de"
+            disabled={loading}
+          />
+        </div>
+
+        {/* Passwort */}
+        <div>
+          <Label htmlFor="password">Passwort *</Label>
+          <Input
+            id="password"
+            type="password"
+            value={formData.password}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            placeholder="Mindestens 8 Zeichen"
+            disabled={loading}
+          />
+        </div>
+
+        {/* Passwort bestätigen */}
+        <div>
+          <Label htmlFor="confirmPassword">Passwort bestätigen *</Label>
+          <Input
+            id="confirmPassword"
+            type="password"
+            value={formData.confirmPassword}
+            onChange={(e) =>
+              setFormData({ ...formData, confirmPassword: e.target.value })
+            }
+            placeholder="Passwort wiederholen"
+            disabled={loading}
+          />
+        </div>
+
+        {/* Fehleranzeige */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            {error}
           </div>
+        )}
 
-          {/* Name */}
-          <div>
-            <Label htmlFor="name">Name *</Label>
-            <Input
-              id="name"
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Max Mustermann"
-              disabled={loading}
-            />
-          </div>
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={loading || !inviteCodeValid}
+        >
+          {loading ? "Registriere..." : "Registrieren"}
+        </Button>
 
-          {/* Email */}
-          <div>
-            <Label htmlFor="email">E-Mail *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="max@beispiel.de"
-              disabled={loading}
-            />
-          </div>
-
-          {/* Passwort */}
-          <div>
-            <Label htmlFor="password">Passwort *</Label>
-            <Input
-              id="password"
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              placeholder="Mindestens 8 Zeichen"
-              disabled={loading}
-            />
-          </div>
-
-          {/* Passwort bestätigen */}
-          <div>
-            <Label htmlFor="confirmPassword">Passwort bestätigen *</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              value={formData.confirmPassword}
-              onChange={(e) =>
-                setFormData({ ...formData, confirmPassword: e.target.value })
-              }
-              placeholder="Passwort wiederholen"
-              disabled={loading}
-            />
-          </div>
-
-          {/* Fehleranzeige */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading || !inviteCodeValid}
-          >
-            {loading ? "Registriere..." : "Registrieren"}
-          </Button>
-
-          {/* Login Link */}
-          <div className="text-center mt-4">
-            <p className="text-sm text-gray-600">
-              Bereits einen Account?{" "}
-              <a href="/auth/login" className="text-blue-600 hover:underline">
-                Zum Login
-              </a>
-            </p>
-          </div>
-        </form>
-      </Card>
-    </div>
+        {/* Login Link */}
+        <div className="text-center mt-4">
+          <p className="text-sm text-gray-600">
+            Bereits einen Account?{" "}
+            <a href="/auth/login" className="text-blue-600 hover:underline">
+              Zum Login
+            </a>
+          </p>
+        </div>
+      </form>
+    </Card>
   );
 }
 
+function RegisterLoading() {
+  return (
+    <Card className="w-full max-w-md p-8">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Registrierung</h1>
+        <p className="text-gray-600">Laden...</p>
+      </div>
+    </Card>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <Suspense fallback={<RegisterLoading />}>
+        <RegisterForm />
+      </Suspense>
+    </div>
+  );
+}
