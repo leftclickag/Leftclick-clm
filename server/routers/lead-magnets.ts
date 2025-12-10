@@ -7,7 +7,7 @@ const leadMagnetSchema = z.object({
   description: z.string().optional(),
   slug: z.string().min(1),
   active: z.boolean().default(true),
-  config: z.record(z.any()).default({}),
+  config: z.record(z.string(), z.any()).default({}),
 });
 
 export const leadMagnetsRouter = router({
