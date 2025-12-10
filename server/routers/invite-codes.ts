@@ -74,7 +74,7 @@ export const inviteCodesRouter = router({
       z.object({
         maxUses: z.number().min(1).default(1),
         expiresInDays: z.number().min(1).max(365).optional(),
-        metadata: z.record(z.any()).optional(),
+        metadata: z.record(z.string(), z.any()).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
