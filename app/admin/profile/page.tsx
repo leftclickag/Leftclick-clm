@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -229,9 +230,11 @@ export default function ProfilePage() {
                   className="hidden"
                 />
                 {avatarUrl ? (
-                  <img
+                  <Image
                     src={avatarUrl}
                     alt="Profilbild"
+                    width={96}
+                    height={96}
                     className="h-24 w-24 rounded-2xl object-cover"
                   />
                 ) : (

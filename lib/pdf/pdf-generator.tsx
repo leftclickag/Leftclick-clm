@@ -318,6 +318,7 @@ export async function generatePersonalizedPDF(config: PDFGeneratorConfig) {
         {/* Header */}
         <View style={styles.header}>
           {branding.logoUrl && (
+            // eslint-disable-next-line jsx-a11y/alt-text
             <Image src={branding.logoUrl} style={styles.logo} />
           )}
           <View>
@@ -414,6 +415,7 @@ export async function generatePersonalizedPDF(config: PDFGeneratorConfig) {
         {/* QR Code Section */}
         {qrCodeDataUrl && (
           <View style={styles.qrCodeSection}>
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <Image src={qrCodeDataUrl} style={styles.qrCode} />
             <Text style={styles.qrCodeText}>
               Scannen Sie den QR-Code für mehr Informationen

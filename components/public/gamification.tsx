@@ -483,6 +483,7 @@ export function ScoreDisplay({
     };
 
     requestAnimationFrame(animate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [score, animated]);
 
   const sizeClasses = {
