@@ -1,0 +1,18 @@
+# Coolify Configuration
+# Diese Datei hilft Coolify bei der Konfiguration
+
+build:
+  dockerfile: Dockerfile
+  context: .
+
+ports:
+  - 3000
+
+environment:
+  - NODE_ENV=production
+  - PORT=3000
+
+healthcheck:
+  path: /api/trpc/healthcheck
+  interval: 30
+
