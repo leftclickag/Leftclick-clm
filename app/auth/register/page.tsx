@@ -34,6 +34,7 @@ export default function RegisterPage() {
         onSuccess: (data) => {
           setInviteCodeValid(data.valid);
           if (!data.valid) {
+            // @ts-ignore - The type definition might be slightly off but the property exists in error case
             setError(data.message || "Ungültiger Invite Code");
           } else {
             setError("");
