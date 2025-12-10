@@ -9,6 +9,9 @@ import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc/client";
 import { createClient } from "@/lib/supabase/client";
 
+// Force dynamic rendering to avoid static prerendering issues with useSearchParams
+export const dynamic = "force-dynamic";
+
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
