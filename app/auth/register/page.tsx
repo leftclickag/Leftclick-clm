@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,17 +31,20 @@ export default function RegisterPage() {
       { code: formData.inviteCode },
       {
         enabled: formData.inviteCode.length > 5,
-        onSuccess: (data) => {
-          setInviteCodeValid(data.valid);
-          if (!data.valid) {
-            // @ts-ignore - The type definition might be slightly off but the property exists in error case
-            setError(data.message || "Ungültiger Invite Code");
-          } else {
-            setError("");
-          }
-        },
       }
     );
+
+  useEffect(() => {
+    if (inviteValidation) {
+      setInviteCodeValid(inviteValidation.valid);
+      if (!inviteValidation.valid) {
+        const message = 'message' in inviteValidation ? inviteValidation.message : "Ungültiger Invite Code";
+        setError(message || "Ungültiger Invite Code");
+      } else {
+        setError("");
+      }
+    }
+  }, [inviteValidation]);
 
   const useInviteCode = trpc.inviteCodes.use.useMutation();
 

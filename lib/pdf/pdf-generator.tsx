@@ -385,7 +385,7 @@ export async function generatePersonalizedPDF(config: PDFGeneratorConfig) {
                   key={key}
                   style={[
                     styles.tableRow,
-                    index % 2 === 1 && styles.tableRowAlt,
+                    index % 2 === 1 ? styles.tableRowAlt : {},
                   ]}
                 >
                   <Text style={[styles.tableCell, styles.tableCellLabel]}>

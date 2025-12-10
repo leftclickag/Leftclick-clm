@@ -57,17 +57,20 @@ interface DailyData {
   starts: number;
   completions: number;
   abandonments: number;
+  [key: string]: any;
 }
 
 interface SourceData {
   source: string;
   leads: number;
   conversions: number;
+  [key: string]: any;
 }
 
 interface DeviceData {
   device: string;
   count: number;
+  [key: string]: any;
 }
 
 interface LeadScoreData {

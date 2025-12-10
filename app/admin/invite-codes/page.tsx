@@ -245,7 +245,7 @@ export default function InviteCodesPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => handleDeactivate(code.id, code.code)}
-                              disabled={deactivateCode.isLoading}
+                              disabled={deactivateCode.isPending}
                             >
                               Deaktivieren
                             </Button>
@@ -254,7 +254,7 @@ export default function InviteCodesPage() {
                             variant="destructive"
                             size="sm"
                             onClick={() => handleDelete(code.id, code.code)}
-                            disabled={deleteCode.isLoading}
+                            disabled={deleteCode.isPending}
                           >
                             Löschen
                           </Button>
@@ -353,10 +353,10 @@ export default function InviteCodesPage() {
                 </Button>
                 <Button
                   onClick={handleCreate}
-                  disabled={createCode.isLoading}
+                  disabled={createCode.isPending}
                   className="flex-1"
                 >
-                  {createCode.isLoading ? "Erstelle..." : "Erstellen"}
+                  {createCode.isPending ? "Erstelle..." : "Erstellen"}
                 </Button>
               </div>
             </div>

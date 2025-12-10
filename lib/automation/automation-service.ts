@@ -312,10 +312,13 @@ class AutomationService {
   ) {
     const supabase = await createClient();
 
-    await supabase.from("submission_tags").insert({
+    await supabase.from("submission_tags").upsert({
       submission_id: submission.id,
       tag_id: config.tag_id,
-    }).onConflict("submission_id, tag_id").ignore();
+    }, {
+      onConflict: "submission_id, tag_id",
+      ignoreDuplicates: true,
+    });
   }
 
   private replaceTokens(text: string, submission: any): string {

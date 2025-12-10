@@ -212,7 +212,7 @@ export default function UsersPage() {
                             variant="destructive"
                             size="sm"
                             onClick={() => handleDeleteUser(user.id, user.email)}
-                            disabled={deleteUser.isLoading}
+                            disabled={deleteUser.isPending}
                           >
                             Löschen
                           </Button>
