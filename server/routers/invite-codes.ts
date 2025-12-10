@@ -2,7 +2,29 @@ import { z } from "zod";
 import { router, protectedProcedure, publicProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { nanoid } from "nanoid";
+
+// DEV MODE Helper - im Development alle authentifizierten User als Admin behandeln
+const isDev = process.env.NODE_ENV === "development";
+
+async function checkAdminPermission(userId: string): Promise<boolean> {
+  // DEV MODE: Alle authentifizierten Benutzer sind Admins
+  if (isDev) {
+    console.log("✅ DEV MODE: Authentifizierter User wird als Admin behandelt (invite-codes router)");
+    return true;
+  }
+
+  // Production: Verwende Admin Client um RLS zu umgehen
+  const adminClient = createAdminClient();
+  const { data: userRole } = await adminClient
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .single();
+
+  return userRole && ["admin", "super_admin"].includes(userRole.role);
+}
 
 export const inviteCodesRouter = router({
   // Liste aller Invite Codes (nur für Admins)
@@ -15,16 +37,11 @@ export const inviteCodesRouter = router({
       })
     )
     .query(async ({ ctx, input }) => {
-      const supabase = await createClient();
+      const adminClient = createAdminClient();
 
       // Prüfe Admin-Berechtigung
-      const { data: userRole } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", ctx.user.id)
-        .single();
-
-      if (!userRole || !["admin", "super_admin"].includes(userRole.role)) {
+      const isAdmin = await checkAdminPermission(ctx.user.id);
+      if (!isAdmin) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Keine Berechtigung für diese Aktion",
@@ -34,7 +51,7 @@ export const inviteCodesRouter = router({
       const { page, pageSize, activeOnly } = input;
       const offset = (page - 1) * pageSize;
 
-      let query = supabase
+      let query = adminClient
         .from("invite_codes")
         .select(
           `
@@ -72,30 +89,42 @@ export const inviteCodesRouter = router({
   create: protectedProcedure
     .input(
       z.object({
+        code: z.string().min(3).max(50).optional(),
         maxUses: z.number().min(1).default(1),
         expiresInDays: z.number().min(1).max(365).optional(),
         metadata: z.record(z.string(), z.any()).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const supabase = await createClient();
+      const adminClient = createAdminClient();
 
       // Prüfe Admin-Berechtigung
-      const { data: userRole } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", ctx.user.id)
-        .single();
-
-      if (!userRole || !["admin", "super_admin"].includes(userRole.role)) {
+      const isAdmin = await checkAdminPermission(ctx.user.id);
+      if (!isAdmin) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Keine Berechtigung für diese Aktion",
         });
       }
 
-      // Generiere einzigartigen Code
-      const code = `INVITE-${nanoid(10).toUpperCase()}`;
+      // Verwende benutzerdefinierten Code oder generiere automatisch
+      const code = input.code 
+        ? input.code.toUpperCase().replace(/\s+/g, '-')
+        : `INVITE-${nanoid(10).toUpperCase()}`;
+
+      // Prüfe ob Code bereits existiert
+      const { data: existingCode } = await adminClient
+        .from("invite_codes")
+        .select("id")
+        .eq("code", code)
+        .single();
+
+      if (existingCode) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: `Der Code "${code}" existiert bereits. Bitte wähle einen anderen.`,
+        });
+      }
 
       // Berechne Ablaufdatum wenn angegeben
       let expiresAt = null;
@@ -104,7 +133,7 @@ export const inviteCodesRouter = router({
         expiresAt.setDate(expiresAt.getDate() + input.expiresInDays);
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await adminClient
         .from("invite_codes")
         .insert({
           code,
@@ -117,9 +146,10 @@ export const inviteCodesRouter = router({
         .single();
 
       if (error) {
+        console.error("❌ Error creating invite code:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Fehler beim Erstellen des Invite Codes",
+          message: `Fehler beim Erstellen des Invite Codes: ${error.message}`,
         });
       }
 
@@ -250,23 +280,18 @@ export const inviteCodesRouter = router({
   deactivate: protectedProcedure
     .input(z.object({ codeId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const supabase = await createClient();
+      const adminClient = createAdminClient();
 
       // Prüfe Admin-Berechtigung
-      const { data: userRole } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", ctx.user.id)
-        .single();
-
-      if (!userRole || !["admin", "super_admin"].includes(userRole.role)) {
+      const isAdmin = await checkAdminPermission(ctx.user.id);
+      if (!isAdmin) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Keine Berechtigung für diese Aktion",
         });
       }
 
-      const { error } = await supabase
+      const { error } = await adminClient
         .from("invite_codes")
         .update({ is_active: false })
         .eq("id", input.codeId);
@@ -285,23 +310,18 @@ export const inviteCodesRouter = router({
   delete: protectedProcedure
     .input(z.object({ codeId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const supabase = await createClient();
+      const adminClient = createAdminClient();
 
       // Prüfe Admin-Berechtigung
-      const { data: userRole } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", ctx.user.id)
-        .single();
-
-      if (!userRole || !["admin", "super_admin"].includes(userRole.role)) {
+      const isAdmin = await checkAdminPermission(ctx.user.id);
+      if (!isAdmin) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Keine Berechtigung für diese Aktion",
         });
       }
 
-      const { error } = await supabase
+      const { error } = await adminClient
         .from("invite_codes")
         .delete()
         .eq("id", input.codeId);
@@ -318,16 +338,11 @@ export const inviteCodesRouter = router({
 
   // Statistiken
   stats: protectedProcedure.query(async ({ ctx }) => {
-    const supabase = await createClient();
+    const adminClient = createAdminClient();
 
     // Prüfe Admin-Berechtigung
-    const { data: userRole } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", ctx.user.id)
-      .single();
-
-    if (!userRole || !["admin", "super_admin"].includes(userRole.role)) {
+    const isAdmin = await checkAdminPermission(ctx.user.id);
+    if (!isAdmin) {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: "Keine Berechtigung für diese Aktion",
@@ -335,18 +350,18 @@ export const inviteCodesRouter = router({
     }
 
     // Gesamtanzahl Codes
-    const { count: totalCodes } = await supabase
+    const { count: totalCodes } = await adminClient
       .from("invite_codes")
       .select("*", { count: "exact", head: true });
 
     // Aktive Codes
-    const { count: activeCodes } = await supabase
+    const { count: activeCodes } = await adminClient
       .from("invite_codes")
       .select("*", { count: "exact", head: true })
       .eq("is_active", true);
 
     // Verwendete Codes
-    const { count: usedCodes } = await supabase
+    const { count: usedCodes } = await adminClient
       .from("invite_code_usage")
       .select("*", { count: "exact", head: true });
 

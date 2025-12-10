@@ -867,6 +867,78 @@ body.light {
   border-radius: inherit;
 }
 
+/* ============================================
+   FORM INPUT STYLES - Theme Adaptive
+   ============================================ */
+
+/* Input base styles for dark mode (default) */
+.input-field {
+  border-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.05);
+  color: hsl(var(--foreground));
+}
+
+.input-field:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
+.input-field:focus {
+  border-color: rgba(147, 51, 234, 0.5);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Input styles for light mode (using .light class) */
+.light .input-field {
+  border-color: hsl(220 20% 80%);
+  background-color: hsl(220 20% 98%);
+  color: hsl(230 25% 10%);
+}
+
+.light .input-field:hover {
+  border-color: hsl(220 20% 70%);
+  background-color: hsl(220 20% 96%);
+}
+
+.light .input-field:focus {
+  border-color: hsl(262 83% 58%);
+  background-color: white;
+}
+
+/* Widget uses :not(.dark) for light mode */
+.widget-container:not(.dark) .input-field {
+  border-color: hsl(220 20% 80%);
+  background-color: hsl(220 20% 98%);
+  color: hsl(230 25% 10%);
+}
+
+.widget-container:not(.dark) .input-field:hover {
+  border-color: hsl(220 20% 70%);
+  background-color: hsl(220 20% 96%);
+}
+
+.widget-container:not(.dark) .input-field:focus {
+  border-color: hsl(262 83% 58%);
+  background-color: white;
+}
+
+/* Widget dark mode */
+.widget-container.dark .input-field {
+  border-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.05);
+  color: hsl(210 40% 98%);
+}
+
+.widget-container.dark .input-field:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
+.widget-container.dark .input-field:focus {
+  border-color: rgba(147, 51, 234, 0.5);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 /* Confetti canvas should be on top */
 canvas.confetti-canvas {
   position: fixed !important;

@@ -113,39 +113,62 @@ export default function ProfilePage() {
     const supabase = createClient();
 
     try {
+      // Get current user to ensure we have the correct ID
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Nicht angemeldet');
+      }
+
       // Delete old avatar if exists
       if (profile.avatar_url) {
         const oldPath = profile.avatar_url.split('/').pop();
         if (oldPath) {
           await supabase.storage
             .from('avatars')
-            .remove([`${profile.id}/${oldPath}`]);
+            .remove([`${user.id}/${oldPath}`]);
         }
       }
 
       // Upload new avatar
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${profile.id}/${fileName}`;
+      const filePath = `${user.id}/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      console.log('Uploading avatar to path:', filePath);
+
+      const { error: uploadError, data: uploadData } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw new Error(`Upload fehlgeschlagen: ${uploadError.message}`);
+      }
+
+      console.log('Upload successful:', uploadData);
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
-      // Update user profile
+      console.log('Public URL:', publicUrl);
+
+      // Update user profile in database
       const { error: updateError } = await supabase
         .from('users')
         .update({ avatar_url: publicUrl })
-        .eq('id', profile.id);
+        .eq('id', user.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Database update error:', updateError);
+        throw new Error(`Datenbank-Update fehlgeschlagen: ${updateError.message}`);
+      }
+
+      console.log('Profile updated successfully');
 
       setAvatarUrl(publicUrl);
       setProfile({ ...profile, avatar_url: publicUrl });
@@ -153,7 +176,8 @@ export default function ProfilePage() {
       setTimeout(() => setSuccess(false), 3000);
     } catch (error) {
       console.error('Error uploading avatar:', error);
-      alert('Fehler beim Hochladen des Profilbilds.');
+      const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      alert(`Fehler beim Hochladen des Profilbilds: ${errorMessage}`);
     } finally {
       setUploading(false);
     }

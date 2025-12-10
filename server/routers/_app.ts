@@ -3,6 +3,7 @@ import { publicProcedure } from "../trpc";
 import { leadMagnetsRouter } from "./lead-magnets";
 import { usersRouter } from "./users";
 import { inviteCodesRouter } from "./invite-codes";
+import { leadsRouter } from "./leads";
 
 export const appRouter = router({
   healthcheck: publicProcedure.query(() => {
@@ -11,6 +12,7 @@ export const appRouter = router({
   leadMagnets: leadMagnetsRouter,
   users: usersRouter,
   inviteCodes: inviteCodesRouter,
+  leads: leadsRouter,
 });
 
 export type AppRouter = typeof appRouter;

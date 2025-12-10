@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, GlowCard } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +15,30 @@ import {
   Plus,
   Sparkles
 } from "lucide-react";
+import { getSSOSettings, updateSSOSettings } from "@/app/actions/sso-settings";
 
 export default function SettingsPage() {
+  const [ssoConfig, setSsoConfig] = useState({ enabled: false, clientId: "", tenantId: "" });
+  const [loadingSSO, setLoadingSSO] = useState(false);
+
+  useEffect(() => {
+    getSSOSettings().then(setSsoConfig);
+  }, []);
+
+  const handleSaveSSO = async () => {
+    setLoadingSSO(true);
+    try {
+      const isEnabled = !!ssoConfig.clientId && !!ssoConfig.tenantId;
+      await updateSSOSettings({ ...ssoConfig, enabled: isEnabled });
+      setSsoConfig(prev => ({ ...prev, enabled: isEnabled }));
+      // Optional: Add toast or feedback here
+    } catch (e) {
+      console.error("Failed to save SSO settings:", e);
+    } finally {
+      setLoadingSSO(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -188,24 +213,51 @@ export default function SettingsPage() {
           <CardContent className="space-y-5">
             <div className="space-y-3">
               <Label htmlFor="azureClientId" className="text-sm text-muted-foreground">Azure Client ID</Label>
-              <Input id="azureClientId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" className="font-mono text-sm" />
+              <Input 
+                id="azureClientId" 
+                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" 
+                className="font-mono text-sm" 
+                value={ssoConfig.clientId}
+                onChange={(e) => setSsoConfig({...ssoConfig, clientId: e.target.value})}
+              />
             </div>
             <div className="space-y-3">
               <Label htmlFor="azureTenantId" className="text-sm text-muted-foreground">Azure Tenant ID</Label>
-              <Input id="azureTenantId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" className="font-mono text-sm" />
+              <Input 
+                id="azureTenantId" 
+                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" 
+                className="font-mono text-sm" 
+                value={ssoConfig.tenantId}
+                onChange={(e) => setSsoConfig({...ssoConfig, tenantId: e.target.value})}
+              />
             </div>
-            <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
-              <div className="flex items-center gap-2 text-emerald-400 text-sm">
-                <Sparkles className="h-4 w-4" />
-                <span className="font-medium">SSO ist aktiviert</span>
+            {ssoConfig.enabled && (
+              <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
+                <div className="flex items-center gap-2 text-emerald-400 text-sm">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="font-medium">SSO ist aktiviert</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Benutzer können sich mit Microsoft 365 anmelden
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Benutzer können sich mit Microsoft 365 anmelden
-              </p>
-            </div>
-            <Button className="w-full mt-2">
-              <Save className="mr-2 h-4 w-4" />
-              Speichern
+            )}
+            <Button 
+              className="w-full mt-2" 
+              onClick={handleSaveSSO}
+              disabled={loadingSSO}
+            >
+              {loadingSSO ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Speichern...
+                </div>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Speichern
+                </>
+              )}
             </Button>
           </CardContent>
         </GlowCard>

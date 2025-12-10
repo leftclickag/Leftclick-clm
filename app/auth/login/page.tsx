@@ -1,17 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn, signInWithMicrosoft } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Zap, Mail, Lock, ArrowRight, Sparkles } from "lucide-react";
+import { getSSOSettings } from "@/app/actions/sso-settings";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ssoConfig, setSsoConfig] = useState<{ enabled: boolean; clientId: string; tenantId: string } | null>(null);
+
+  useEffect(() => {
+    getSSOSettings().then(setSsoConfig);
+  }, []);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,31 +177,35 @@ export default function LoginPage() {
             </form>
 
             {/* Divider */}
-            <div className="relative my-8">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/10" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-card/60 backdrop-blur-sm px-4 text-sm text-muted-foreground">
-                  oder fortfahren mit
-                </span>
-              </div>
-            </div>
+            {ssoConfig?.enabled && ssoConfig?.clientId && ssoConfig?.tenantId && (
+              <>
+                <div className="relative my-8">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-white/10" />
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-card/60 backdrop-blur-sm px-4 text-sm text-muted-foreground">
+                      oder fortfahren mit
+                    </span>
+                  </div>
+                </div>
 
-            {/* Microsoft Login */}
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              className="w-full h-12 rounded-xl group"
-              onClick={handleMicrosoftLogin}
-              disabled={loading}
-            >
-              <svg className="mr-3 h-5 w-5 transition-transform group-hover:scale-110" viewBox="0 0 23 23" fill="currentColor">
-                <path d="M0 0h11.377v11.372H0zm11.377 0H23v11.372H11.377zm0 11.628H23V23H11.377zm-11.377 0h11.377V23H0z" />
-              </svg>
-              Microsoft 365
-            </Button>
+                {/* Microsoft Login */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  className="w-full h-12 rounded-xl group"
+                  onClick={handleMicrosoftLogin}
+                  disabled={loading}
+                >
+                  <svg className="mr-3 h-5 w-5 transition-transform group-hover:scale-110" viewBox="0 0 23 23" fill="currentColor">
+                    <path d="M0 0h11.377v11.372H0zm11.377 0H23v11.372H11.377zm0 11.628H23V23H11.377zm-11.377 0h11.377V23H0z" />
+                  </svg>
+                  Microsoft 365
+                </Button>
+              </>
+            )}
 
             {/* Footer */}
             <div className="mt-8 text-center">

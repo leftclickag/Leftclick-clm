@@ -15,12 +15,14 @@ import {
   User,
   Users,
   Ticket,
+  Contact,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Lead-Magnete", href: "/admin/lead-magnets", icon: FileText },
+  { name: "Leads", href: "/admin/leads", icon: Contact },
   { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { name: "Benutzer", href: "/admin/users", icon: Users },
   { name: "Invite Codes", href: "/admin/invite-codes", icon: Ticket },
