@@ -47,6 +47,7 @@ export interface WizardField {
   helpText?: string;
   showInQuickMode?: boolean; // Im Schnell-Modus anzeigen?
   showInExpertMode?: boolean; // Im Experten-Modus anzeigen?
+  resultType?: "total" | "chart_pie" | "chart_bar" | "table" | "summary"; // Für Ergebnis-Felder
 }
 
 // Schritt-Effekte
@@ -70,6 +71,7 @@ export interface WizardStep {
   fields: WizardField[];
   calculations: string[]; // IDs der zugehörigen Berechnungen
   effects: StepEffects;
+  isResultStep?: boolean; // Ist dies die Ergebnis-Seite?
 }
 
 // E-Mail Einstellungen

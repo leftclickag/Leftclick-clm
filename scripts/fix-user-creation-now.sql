@@ -83,3 +83,4 @@ SELECT
   COUNT(CASE WHEN tenant_id IS NULL THEN 1 END) as users_without_tenant
 FROM users;
 
+

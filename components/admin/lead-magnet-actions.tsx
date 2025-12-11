@@ -1,17 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { QuickTooltip } from "@/components/ui/tooltip";
+import { useRouter } from "next/navigation";
 import { 
   Copy, 
   Code, 
   ExternalLink, 
-  Trash2, 
   MoreHorizontal,
   Link as LinkIcon,
   FileCode,
   Clipboard,
-  Check
+  Check,
+  CopyPlus,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { trpc } from "@/lib/trpc/client";
 
 interface LeadMagnetActionsProps {
   magnet: {
@@ -29,10 +31,36 @@ interface LeadMagnetActionsProps {
     slug: string;
     title: string;
   };
+  onDuplicated?: () => void;
 }
 
-export function LeadMagnetActions({ magnet }: LeadMagnetActionsProps) {
+export function LeadMagnetActions({ magnet, onDuplicated }: LeadMagnetActionsProps) {
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
+  const [isDuplicating, setIsDuplicating] = useState(false);
+  const router = useRouter();
+  const utils = trpc.useUtils();
+  
+  const duplicateMutation = trpc.leadMagnets.duplicate.useMutation({
+    onSuccess: (newLeadMagnet) => {
+      // Cache invalidieren und Liste neu laden
+      utils.leadMagnets.list.invalidate();
+      onDuplicated?.();
+      // Optional: Zur neuen Kopie navigieren
+      router.push(`/admin/lead-magnets/${newLeadMagnet.id}`);
+    },
+    onError: (error) => {
+      console.error("Fehler beim Duplizieren:", error);
+      alert(`Fehler beim Duplizieren: ${error.message}`);
+    },
+    onSettled: () => {
+      setIsDuplicating(false);
+    }
+  });
+
+  const handleDuplicate = async () => {
+    setIsDuplicating(true);
+    duplicateMutation.mutate({ id: magnet.id });
+  };
 
   const baseUrl = typeof window !== 'undefined' 
     ? window.location.origin 
@@ -97,11 +125,10 @@ export function LeadMagnetActions({ magnet }: LeadMagnetActionsProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <QuickTooltip content="Mehr Aktionen: Code kopieren, API-Zugriff, Integrationen">
-          <Button variant="ghost" size="icon" className="h-9 w-9">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </QuickTooltip>
+        <Button variant="ghost" size="icon" className="h-9 w-9">
+          <MoreHorizontal className="h-4 w-4" />
+          <span className="sr-only">Mehr Aktionen</span>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>Widget-Integration</DropdownMenuLabel>
@@ -185,8 +212,26 @@ export function LeadMagnetActions({ magnet }: LeadMagnetActionsProps) {
             <span>In neuem Tab öffnen</span>
           </a>
         </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+        
+        <DropdownMenuLabel className="text-xs text-muted-foreground">
+          Lead Magnet verwalten
+        </DropdownMenuLabel>
+
+        <DropdownMenuItem 
+          onClick={handleDuplicate}
+          disabled={isDuplicating}
+          className="cursor-pointer"
+        >
+          {isDuplicating ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <CopyPlus className="mr-2 h-4 w-4" />
+          )}
+          <span>{isDuplicating ? "Wird dupliziert..." : "Duplizieren"}</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
-

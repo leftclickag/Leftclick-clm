@@ -168,3 +168,4 @@ COMMENT ON COLUMN api_integrations.filter_conditions IS 'Optionale Filter-Beding
 
 COMMENT ON TABLE api_integration_logs IS 'Log-Tabelle für alle API-Push-Versuche mit Request/Response-Details';
 
+

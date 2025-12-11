@@ -19,3 +19,4 @@ SELECT id, email, role, tenant_id
 FROM users 
 WHERE role = 'super_admin';
 
+

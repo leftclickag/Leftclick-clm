@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, GlowCard } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { LeadMagnetBuilder } from "@/components/admin/lead-magnet-builder";
 import { CalculatorBuilder } from "@/components/admin/calculator-builder";
-import { VisualWizardBuilder } from "@/components/admin/visual-wizard-builder";
+import { VisualFormBuilder } from "@/components/admin/visual-form-builder";
 import { PriceVariableManager } from "@/components/admin/price-variable-manager";
 import { LeadMagnetSettings } from "@/components/admin/lead-magnet-settings";
 import { ChartBuilder } from "@/components/admin/chart-builder";
@@ -77,19 +78,49 @@ export function EditLeadMagnetForm({ leadMagnet }: EditLeadMagnetFormProps) {
   });
 
   // Wizard Steps (erweitert)
+  // WICHTIG: Die Felder sind in step.config.fields gespeichert (aus flow_steps Tabelle)
   const [wizardSteps, setWizardSteps] = useState<WizardStep[]>(
-    (config.steps || []).map((step: any, idx: number) => ({
-      id: step.id || `step_${idx}`,
-      title: step.title || `Schritt ${idx + 1}`,
-      description: step.description,
-      order: step.step_number || step.order || idx + 1,
-      isRequired: step.isRequired ?? true,
-      isSkippable: step.isSkippable ?? false,
-      skipDefaultValues: step.skipDefaultValues || {},
-      fields: step.fields || [],
-      calculations: step.calculations || [],
-      effects: step.effects || {},
-    }))
+    (config.steps || []).map((step: any, idx: number) => {
+      // Extrahiere Felder aus step.config.fields (Datenbank-Struktur)
+      const stepConfig = step.config || {};
+      const fields = stepConfig.fields || step.fields || [];
+      
+      // Transformiere Felder in das WizardField-Format
+      const transformedFields = fields.map((field: any, fieldIdx: number) => ({
+        id: field.id || `field_${fieldIdx}`,
+        type: field.type || "text",
+        label: field.label || "",
+        placeholder: field.placeholder || "",
+        variableName: field.variableName || field.id || `var_${fieldIdx}`,
+        visibility: field.visibility || "normal",
+        validation: {
+          required: field.required ?? false,
+          min: field.min,
+          max: field.max,
+          pattern: field.pattern,
+          customMessage: field.customMessage,
+        },
+        options: field.options,
+        defaultValue: field.defaultValue,
+        helpText: field.helpText || field.description,
+        showInQuickMode: field.showInQuickMode ?? true,
+        showInExpertMode: field.showInExpertMode ?? true,
+      }));
+      
+      return {
+        id: step.id || `step_${idx}`,
+        title: step.title || `Schritt ${idx + 1}`,
+        description: step.description || stepConfig.description,
+        order: step.step_number || step.order || idx + 1,
+        isRequired: step.isRequired ?? true,
+        isSkippable: step.isSkippable ?? false,
+        skipDefaultValues: step.skipDefaultValues || {},
+        fields: transformedFields,
+        calculations: step.calculations || [],
+        effects: step.effects || {},
+        isResultStep: step.component_type === "result",
+      };
+    })
   );
 
   // Preis-Variablen
@@ -160,6 +191,9 @@ export function EditLeadMagnetForm({ leadMagnet }: EditLeadMagnetFormProps) {
     },
   });
 
+  // Delete Dialog State
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -198,9 +232,11 @@ export function EditLeadMagnetForm({ leadMagnet }: EditLeadMagnetFormProps) {
   };
 
   const handleDelete = () => {
-    if (confirm(`Möchten Sie den Lead-Magnet "${title}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) {
-      deleteMutation.mutate({ id: leadMagnet.id });
-    }
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = () => {
+    deleteMutation.mutate({ id: leadMagnet.id });
   };
 
   const typeOptions = [
@@ -558,7 +594,12 @@ export function EditLeadMagnetForm({ leadMagnet }: EditLeadMagnetFormProps) {
                 <CardContent>
                   <CalculatorBuilder
                     initialConfig={calculatorConfig}
-                    onChange={(newConfig) => setCalculatorConfig(newConfig)}
+                    onChange={(newConfig) => setCalculatorConfig({
+                      wizardMode: newConfig.wizardMode ?? true,
+                      showProgress: newConfig.showProgress ?? true,
+                      calculations: newConfig.calculations || [],
+                      outputs: newConfig.outputs || [],
+                    })}
                   />
                 </CardContent>
               </GlowCard>
@@ -574,18 +615,32 @@ export function EditLeadMagnetForm({ leadMagnet }: EditLeadMagnetFormProps) {
                     <div className="p-2.5 rounded-xl bg-amber-500/20">
                       <Sparkles className="h-5 w-5 text-amber-400" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <CardTitle className="text-lg">Wizard-Builder</CardTitle>
-                      <CardDescription>Erstellen Sie Schritte mit Drag & Drop und Live-Preview</CardDescription>
+                      <CardDescription>
+                        Erstellen Sie Schritte mit Drag & Drop und Live-Preview
+                        <a 
+                          href="/docs/WIZARD_BUILDER.md" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="ml-2 text-cyan-400 hover:text-cyan-300 underline text-xs"
+                        >
+                          📖 Dokumentation öffnen
+                        </a>
+                      </CardDescription>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <VisualWizardBuilder
+                  <VisualFormBuilder
                     initialSteps={wizardSteps}
                     calculations={calculatorConfig.calculations}
                     priceVariables={priceVariables}
                     onChange={setWizardSteps}
+                    onCalculationsChange={(calcs) => setCalculatorConfig({
+                      ...calculatorConfig,
+                      calculations: calcs
+                    })}
                   />
                 </CardContent>
               </GlowCard>
@@ -757,6 +812,18 @@ export function EditLeadMagnetForm({ leadMagnet }: EditLeadMagnetFormProps) {
           </div>
         </div>
       </form>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Lead-Magnet löschen"
+        description={`Möchten Sie den Lead-Magnet "${title}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`}
+        type="delete"
+        confirmText="Löschen"
+        cancelText="Abbrechen"
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

@@ -340,13 +340,11 @@ export function LeadMagnetsGrid({ leadMagnets }: LeadMagnetsGridProps) {
                     </Button>
                   </Link>
                 </QuickTooltip>
-                <PermissionGuard permission="lead_magnets.delete">
-                  <LeadMagnetActions magnet={{
-                    id: magnet.id,
-                    slug: magnet.slug,
-                    title: magnet.title
-                  }} />
-                </PermissionGuard>
+                <LeadMagnetActions magnet={{
+                  id: magnet.id,
+                  slug: magnet.slug,
+                  title: magnet.title
+                }} />
               </div>
             </CardContent>
           </GlowCard>

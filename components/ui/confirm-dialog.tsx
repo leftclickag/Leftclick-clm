@@ -1,163 +1,231 @@
 "use client";
 
-import * as React from "react";
+import { useState, createContext, useContext, useCallback, ReactNode } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "./dialog";
-import { Button } from "./button";
-import { AlertTriangle, Info, CheckCircle2, XCircle } from "lucide-react";
+  DialogBody,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, Info, CheckCircle, XCircle, Trash2 } from "lucide-react";
 
-type ConfirmVariant = "default" | "danger" | "warning" | "info" | "success";
+// Dialog-Typen
+type DialogType = "confirm" | "alert" | "warning" | "delete" | "success";
 
-interface ConfirmDialogProps {
+interface ConfirmOptions {
+  title: string;
+  description: string;
+  type?: DialogType;
+  confirmText?: string;
+  cancelText?: string;
+  confirmVariant?: "default" | "destructive" | "outline" | "ghost";
+}
+
+interface ConfirmContextType {
+  confirm: (options: ConfirmOptions) => Promise<boolean>;
+  alert: (title: string, description: string) => Promise<void>;
+}
+
+const ConfirmContext = createContext<ConfirmContextType | null>(null);
+
+// Hook zum Verwenden des Confirm-Dialogs
+export function useConfirm() {
+  const context = useContext(ConfirmContext);
+  if (!context) {
+    throw new Error("useConfirm must be used within a ConfirmProvider");
+  }
+  return context;
+}
+
+// Provider-Komponente
+export function ConfirmProvider({ children }: { children: ReactNode }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [options, setOptions] = useState<ConfirmOptions | null>(null);
+  const [resolvePromise, setResolvePromise] = useState<((value: boolean) => void) | null>(null);
+
+  const confirm = useCallback((opts: ConfirmOptions): Promise<boolean> => {
+    return new Promise((resolve) => {
+      setOptions(opts);
+      setResolvePromise(() => resolve);
+      setIsOpen(true);
+    });
+  }, []);
+
+  const alert = useCallback((title: string, description: string): Promise<void> => {
+    return new Promise((resolve) => {
+      setOptions({
+        title,
+        description,
+        type: "alert",
+        confirmText: "OK",
+        cancelText: undefined,
+      });
+      setResolvePromise(() => () => resolve());
+      setIsOpen(true);
+    });
+  }, []);
+
+  const handleConfirm = () => {
+    setIsOpen(false);
+    resolvePromise?.(true);
+  };
+
+  const handleCancel = () => {
+    setIsOpen(false);
+    resolvePromise?.(false);
+  };
+
+  const getIcon = () => {
+    switch (options?.type) {
+      case "warning":
+        return <AlertTriangle className="h-6 w-6 text-amber-500" />;
+      case "delete":
+        return <Trash2 className="h-6 w-6 text-red-500" />;
+      case "success":
+        return <CheckCircle className="h-6 w-6 text-green-500" />;
+      case "alert":
+        return <Info className="h-6 w-6 text-blue-500" />;
+      default:
+        return <Info className="h-6 w-6 text-blue-500" />;
+    }
+  };
+
+  const getIconBackground = () => {
+    switch (options?.type) {
+      case "warning":
+        return "bg-amber-500/20";
+      case "delete":
+        return "bg-red-500/20";
+      case "success":
+        return "bg-green-500/20";
+      default:
+        return "bg-blue-500/20";
+    }
+  };
+
+  return (
+    <ConfirmContext.Provider value={{ confirm, alert }}>
+      {children}
+      <Dialog open={isOpen} onOpenChange={(open) => !open && handleCancel()}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-xl ${getIconBackground()}`}>
+                {getIcon()}
+              </div>
+              <DialogTitle className="text-lg">{options?.title}</DialogTitle>
+            </div>
+          </DialogHeader>
+          <DialogBody>
+            <p className="text-muted-foreground">{options?.description}</p>
+          </DialogBody>
+          <DialogFooter className="gap-3">
+            {options?.cancelText !== undefined && (
+              <Button variant="outline" onClick={handleCancel}>
+                {options?.cancelText || "Abbrechen"}
+              </Button>
+            )}
+            <Button
+              variant={options?.confirmVariant || (options?.type === "delete" ? "destructive" : "default")}
+              onClick={handleConfirm}
+            >
+              {options?.confirmText || "Bestätigen"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </ConfirmContext.Provider>
+  );
+}
+
+// Einfache Confirm-Dialog-Komponente für direkten Gebrauch
+interface SimpleConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  description?: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  variant?: ConfirmVariant;
-  onConfirm: () => void | Promise<void>;
-  loading?: boolean;
+  description: string;
+  type?: DialogType;
+  confirmText?: string;
+  cancelText?: string;
+  onConfirm: () => void;
+  onCancel?: () => void;
+  confirmVariant?: "default" | "destructive" | "outline" | "ghost";
 }
-
-const variantConfig: Record<
-  ConfirmVariant,
-  {
-    icon: React.ComponentType<{ className?: string }>;
-    iconClass: string;
-    bgClass: string;
-    confirmClass: string;
-  }
-> = {
-  default: {
-    icon: Info,
-    iconClass: "text-blue-400",
-    bgClass: "bg-blue-500/10 border-blue-500/30",
-    confirmClass: "bg-blue-600 hover:bg-blue-700",
-  },
-  danger: {
-    icon: XCircle,
-    iconClass: "text-red-400",
-    bgClass: "bg-red-500/10 border-red-500/30",
-    confirmClass: "bg-red-600 hover:bg-red-700",
-  },
-  warning: {
-    icon: AlertTriangle,
-    iconClass: "text-yellow-400",
-    bgClass: "bg-yellow-500/10 border-yellow-500/30",
-    confirmClass: "bg-yellow-600 hover:bg-yellow-700",
-  },
-  info: {
-    icon: Info,
-    iconClass: "text-cyan-400",
-    bgClass: "bg-cyan-500/10 border-cyan-500/30",
-    confirmClass: "bg-cyan-600 hover:bg-cyan-700",
-  },
-  success: {
-    icon: CheckCircle2,
-    iconClass: "text-emerald-400",
-    bgClass: "bg-emerald-500/10 border-emerald-500/30",
-    confirmClass: "bg-emerald-600 hover:bg-emerald-700",
-  },
-};
 
 export function ConfirmDialog({
   open,
   onOpenChange,
   title,
   description,
-  confirmLabel = "Bestätigen",
-  cancelLabel = "Abbrechen",
-  variant = "default",
+  type = "confirm",
+  confirmText = "Bestätigen",
+  cancelText = "Abbrechen",
   onConfirm,
-  loading = false,
-}: ConfirmDialogProps) {
-  const config = variantConfig[variant];
-  const Icon = config.icon;
-  const [isPending, setIsPending] = React.useState(false);
+  onCancel,
+  confirmVariant,
+}: SimpleConfirmDialogProps) {
+  const handleCancel = () => {
+    onOpenChange(false);
+    onCancel?.();
+  };
 
-  const handleConfirm = async () => {
-    setIsPending(true);
-    try {
-      await onConfirm();
-      onOpenChange(false);
-    } catch (error) {
-      console.error("Confirm action failed:", error);
-    } finally {
-      setIsPending(false);
+  const handleConfirm = () => {
+    onOpenChange(false);
+    onConfirm();
+  };
+
+  const getIcon = () => {
+    switch (type) {
+      case "warning":
+        return <AlertTriangle className="h-6 w-6 text-amber-500" />;
+      case "delete":
+        return <Trash2 className="h-6 w-6 text-red-500" />;
+      case "success":
+        return <CheckCircle className="h-6 w-6 text-green-500" />;
+      default:
+        return <Info className="h-6 w-6 text-blue-500" />;
+    }
+  };
+
+  const getIconBackground = () => {
+    switch (type) {
+      case "warning":
+        return "bg-amber-500/20";
+      case "delete":
+        return "bg-red-500/20";
+      case "success":
+        return "bg-green-500/20";
+      default:
+        return "bg-blue-500/20";
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        showClose={!isPending && !loading}
-        onClose={() => !isPending && !loading && onOpenChange(false)}
-      >
+    <Dialog open={open} onOpenChange={handleCancel}>
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <div className="flex items-start gap-4">
-            <div
-              className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${config.bgClass} border`}
-            >
-              <Icon className={`h-6 w-6 ${config.iconClass}`} />
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-xl ${getIconBackground()}`}>
+              {getIcon()}
             </div>
-            <div className="flex-1 pt-1">
-              <DialogTitle>{title}</DialogTitle>
-              {description && (
-                <DialogDescription className="mt-2">
-                  {description}
-                </DialogDescription>
-              )}
-            </div>
+            <DialogTitle className="text-lg">{title}</DialogTitle>
           </div>
         </DialogHeader>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isPending || loading}
-            className="flex-1"
-          >
-            {cancelLabel}
+        <DialogBody>
+          <p className="text-muted-foreground">{description}</p>
+        </DialogBody>
+        <DialogFooter className="gap-3">
+          <Button variant="outline" onClick={handleCancel}>
+            {cancelText}
           </Button>
           <Button
+            variant={confirmVariant || (type === "delete" ? "destructive" : "default")}
             onClick={handleConfirm}
-            disabled={isPending || loading}
-            className={`flex-1 ${config.confirmClass}`}
           >
-            {isPending || loading ? (
-              <>
-                <svg
-                  className="animate-spin -ml-1 mr-2 h-4 w-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                Lädt...
-              </>
-            ) : (
-              confirmLabel
-            )}
+            {confirmText}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -165,43 +233,70 @@ export function ConfirmDialog({
   );
 }
 
-// Hook für einfache Verwendung
-export function useConfirmDialog() {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [config, setConfig] = React.useState<Omit<ConfirmDialogProps, "open" | "onOpenChange">>({
-    title: "",
-    onConfirm: () => {},
-  });
-
-  const confirm = React.useCallback(
-    (options: Omit<ConfirmDialogProps, "open" | "onOpenChange">) => {
-      return new Promise<boolean>((resolve) => {
-        setConfig({
-          ...options,
-          onConfirm: async () => {
-            await options.onConfirm();
-            resolve(true);
-          },
-        });
-        setIsOpen(true);
-      });
-    },
-    []
-  );
-
-  const dialog = (
-    <ConfirmDialog
-      {...config}
-      open={isOpen}
-      onOpenChange={(open) => {
-        setIsOpen(open);
-        if (!open) {
-          // Dialog wurde abgebrochen
-        }
-      }}
-    />
-  );
-
-  return { confirm, dialog };
+// Alert-Dialog-Komponente
+interface AlertDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  type?: "info" | "warning" | "error" | "success";
+  buttonText?: string;
 }
 
+export function AlertDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  type = "info",
+  buttonText = "OK",
+}: AlertDialogProps) {
+  const getIcon = () => {
+    switch (type) {
+      case "warning":
+        return <AlertTriangle className="h-6 w-6 text-amber-500" />;
+      case "error":
+        return <XCircle className="h-6 w-6 text-red-500" />;
+      case "success":
+        return <CheckCircle className="h-6 w-6 text-green-500" />;
+      default:
+        return <Info className="h-6 w-6 text-blue-500" />;
+    }
+  };
+
+  const getIconBackground = () => {
+    switch (type) {
+      case "warning":
+        return "bg-amber-500/20";
+      case "error":
+        return "bg-red-500/20";
+      case "success":
+        return "bg-green-500/20";
+      default:
+        return "bg-blue-500/20";
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-xl ${getIconBackground()}`}>
+              {getIcon()}
+            </div>
+            <DialogTitle className="text-lg">{title}</DialogTitle>
+          </div>
+        </DialogHeader>
+        <DialogBody>
+          <p className="text-muted-foreground">{description}</p>
+        </DialogBody>
+        <DialogFooter>
+          <Button onClick={() => onOpenChange(false)}>
+            {buttonText}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

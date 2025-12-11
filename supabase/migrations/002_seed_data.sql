@@ -217,7 +217,7 @@ INSERT INTO flow_steps (lead_magnet_id, step_number, title, description, compone
         },
         {
           "id": "current_monthly_cost",
-          "label": "Aktuelle monatliche Telefonkosten (€)",
+          "label": "Aktuelle monatliche Telefonkosten (CHF)",
           "type": "number",
           "required": true,
           "placeholder": "z.B. 2500",
@@ -373,31 +373,31 @@ INSERT INTO flow_steps (lead_magnet_id, step_number, title, description, compone
         {
           "id": "business_basic",
           "label": "Microsoft 365 Business Basic",
-          "description": "5,00 €/User/Monat - Exchange, OneDrive, Teams",
+          "description": "5,00 CHF/User/Monat - Exchange, OneDrive, Teams",
           "value": 5.0
         },
         {
           "id": "business_standard",
           "label": "Microsoft 365 Business Standard",
-          "description": "10,50 €/User/Monat - Alle Basic Features + Office Apps",
+          "description": "10,50 CHF/User/Monat - Alle Basic Features + Office Apps",
           "value": 10.5
         },
         {
           "id": "business_premium",
           "label": "Microsoft 365 Business Premium",
-          "description": "20,00 €/User/Monat - Alle Standard Features + Security + Device Management",
+          "description": "20,00 CHF/User/Monat - Alle Standard Features + Security + Device Management",
           "value": 20.0
         },
         {
           "id": "e3",
           "label": "Microsoft 365 E3",
-          "description": "32,00 €/User/Monat - Enterprise Features + Advanced Security + Compliance",
+          "description": "32,00 CHF/User/Monat - Enterprise Features + Advanced Security + Compliance",
           "value": 32.0
         },
         {
           "id": "e5",
           "label": "Microsoft 365 E5",
-          "description": "52,00 €/User/Monat - Alle E3 Features + Advanced Threat Protection + Power BI Pro",
+          "description": "52,00 CHF/User/Monat - Alle E3 Features + Advanced Threat Protection + Power BI Pro",
           "value": 52.0
         }
       ]
@@ -554,7 +554,7 @@ INSERT INTO flow_steps (lead_magnet_id, step_number, title, description, compone
         },
         {
           "id": "avg_salary",
-          "label": "Durchschnittliches Jahresgehalt IT-Mitarbeiter (€)",
+          "label": "Durchschnittliches Jahresgehalt IT-Mitarbeiter (CHF)",
           "type": "number",
           "required": true,
           "description": "Inkl. Lohnnebenkosten"
@@ -572,14 +572,14 @@ INSERT INTO flow_steps (lead_magnet_id, step_number, title, description, compone
       "fields": [
         {
           "id": "infrastructure_monthly",
-          "label": "Monatliche Infrastruktur-Kosten (€)",
+          "label": "Monatliche Infrastruktur-Kosten (CHF)",
           "type": "number",
           "required": true,
           "description": "Server, Cloud, Software-Lizenzen, etc."
         },
         {
           "id": "migration_cost",
-          "label": "Einmalige Migrationskosten (€)",
+          "label": "Einmalige Migrationskosten (CHF)",
           "type": "number",
           "required": true,
           "description": "Kosten für den Wechsel zum Outsourcing"
@@ -599,31 +599,31 @@ INSERT INTO flow_steps (lead_magnet_id, step_number, title, description, compone
         {
           "id": "support_tier1",
           "label": "Basis-Support (8x5)",
-          "description": "50 €/User/Monat",
+          "description": "50 CHF/User/Monat",
           "value": 50
         },
         {
           "id": "support_tier2",
           "label": "Erweiterter Support (24x7)",
-          "description": "100 €/User/Monat",
+          "description": "100 CHF/User/Monat",
           "value": 100
         },
         {
           "id": "support_tier3",
           "label": "Premium Support",
-          "description": "150 €/User/Monat",
+          "description": "150 CHF/User/Monat",
           "value": 150
         },
         {
           "id": "security",
           "label": "IT-Security Services",
-          "description": "30 €/User/Monat",
+          "description": "30 CHF/User/Monat",
           "value": 30
         },
         {
           "id": "cloud",
           "label": "Cloud-Management",
-          "description": "40 €/User/Monat",
+          "description": "40 CHF/User/Monat",
           "value": 40
         }
       ]
@@ -789,14 +789,14 @@ INSERT INTO flow_steps (lead_magnet_id, step_number, title, description, compone
         },
         {
           "id": "server_cost_per_year",
-          "label": "Durchschnittliche Server-Kosten pro Jahr (€)",
+          "label": "Durchschnittliche Server-Kosten pro Jahr (CHF)",
           "type": "number",
           "required": true,
           "description": "Hardware-Kosten amortisiert über 3-5 Jahre"
         },
         {
           "id": "power_cost_per_server",
-          "label": "Stromkosten pro Server/Monat (€)",
+          "label": "Stromkosten pro Server/Monat (CHF)",
           "type": "number",
           "required": true,
           "description": "Durchschnittliche monatliche Stromkosten"
@@ -816,19 +816,19 @@ INSERT INTO flow_steps (lead_magnet_id, step_number, title, description, compone
         {
           "id": "azure",
           "label": "Microsoft Azure",
-          "description": "Ab 100 €/Server/Monat",
+          "description": "Ab 100 CHF/Server/Monat",
           "value": 100
         },
         {
           "id": "aws",
           "label": "Amazon Web Services (AWS)",
-          "description": "Ab 80 €/Server/Monat",
+          "description": "Ab 80 CHF/Server/Monat",
           "value": 80
         },
         {
           "id": "google",
           "label": "Google Cloud Platform",
-          "description": "Ab 90 €/Server/Monat",
+          "description": "Ab 90 CHF/Server/Monat",
           "value": 90
         }
       ]
@@ -884,9 +884,9 @@ INSERT INTO flow_steps (lead_magnet_id, step_number, title, description, compone
           "type": "select",
           "required": true,
           "options": [
-            {"value": "self", "label": "Selbst durchführen (0 €)"},
-            {"value": "basic", "label": "Basis-Support (300 €/Server)"},
-            {"value": "full", "label": "Vollständiger Service (500 €/Server)"}
+            {"value": "self", "label": "Selbst durchführen (CHF 0)"},
+            {"value": "basic", "label": "Basis-Support (300 CHF/Server)"},
+            {"value": "full", "label": "Vollständiger Service (500 CHF/Server)"}
           ],
           "description": "Wie viel Unterstützung benötigen Sie?"
         }
@@ -905,25 +905,25 @@ INSERT INTO flow_steps (lead_magnet_id, step_number, title, description, compone
         {
           "id": "backup",
           "label": "Backup & Disaster Recovery",
-          "description": "20 €/Server/Monat",
+          "description": "20 CHF/Server/Monat",
           "value": 20
         },
         {
           "id": "monitoring",
           "label": "Monitoring & Logging",
-          "description": "15 €/Server/Monat",
+          "description": "15 CHF/Server/Monat",
           "value": 15
         },
         {
           "id": "security",
           "label": "Security Services",
-          "description": "25 €/Server/Monat",
+          "description": "25 CHF/Server/Monat",
           "value": 25
         },
         {
           "id": "cdn",
           "label": "Content Delivery Network",
-          "description": "10 €/Server/Monat",
+          "description": "10 CHF/Server/Monat",
           "value": 10
         }
       ]
@@ -1071,21 +1071,21 @@ INSERT INTO flow_steps (lead_magnet_id, step_number, title, description, compone
         {
           "id": "basic",
           "label": "Basis-Audit",
-          "description": "5.000 € + 10 €/User",
+          "description": "CHF 5000 + 10 CHF/User",
           "baseCost": 5000,
           "perUserCost": 10
         },
         {
           "id": "standard",
           "label": "Standard-Audit",
-          "description": "10.000 € + 20 €/User",
+          "description": "CHF 10000 + 20 CHF/User",
           "baseCost": 10000,
           "perUserCost": 20
         },
         {
           "id": "premium",
           "label": "Premium-Audit",
-          "description": "20.000 € + 30 €/User",
+          "description": "CHF 20000 + 30 CHF/User",
           "baseCost": 20000,
           "perUserCost": 30
         }

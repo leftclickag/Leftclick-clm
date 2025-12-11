@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Plus,
   Trash2,
@@ -23,7 +24,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 
 interface PriceVariableManagerProps {
@@ -41,6 +41,8 @@ export function PriceVariableManager({
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [editingVar, setEditingVar] = useState<PriceVariable | null>(null);
   const [showUsageDialog, setShowUsageDialog] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [variableToDelete, setVariableToDelete] = useState<string | null>(null);
 
   // Finde Verwendungen für jede Variable
   const getVariableUsage = (varName: string) => {
@@ -91,9 +93,16 @@ export function PriceVariableManager({
   };
 
   const deleteVariable = (id: string) => {
-    if (confirm("Möchten Sie diese Variable wirklich löschen?")) {
-      onChange(variables.filter((v) => v.id !== id));
+    setVariableToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteVariable = () => {
+    if (variableToDelete) {
+      onChange(variables.filter((v) => v.id !== variableToDelete));
+      setVariableToDelete(null);
     }
+    setDeleteDialogOpen(false);
   };
 
   return (
@@ -386,6 +395,18 @@ export function PriceVariableManager({
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Variable löschen"
+        description="Möchten Sie diese Variable wirklich löschen? Berechnungen, die diese Variable verwenden, funktionieren dann nicht mehr korrekt."
+        type="delete"
+        confirmText="Löschen"
+        cancelText="Abbrechen"
+        onConfirm={confirmDeleteVariable}
+      />
     </div>
   );
 }

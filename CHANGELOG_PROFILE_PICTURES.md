@@ -93,3 +93,4 @@ supabase db push
 
 Siehe `PROFILE_PICTURE_SETUP.md` für detaillierte Setup-Anleitung.
 
+

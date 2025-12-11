@@ -153,5 +153,73 @@ export const leadMagnetsRouter = router({
       if (error) throw new Error(error.message);
       return { success: true };
     }),
+
+  duplicate: adminProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      // 1. Lade den Original Lead Magnet
+      const { data: original, error: fetchError } = await ctx.supabase
+        .from("lead_magnets")
+        .select("*")
+        .eq("id", input.id)
+        .single();
+
+      if (fetchError) throw new Error(fetchError.message);
+      if (!original) throw new Error("Lead Magnet nicht gefunden");
+
+      // 2. Lade die zugehörigen Flow Steps
+      const { data: originalSteps, error: stepsError } = await ctx.supabase
+        .from("flow_steps")
+        .select("*")
+        .eq("lead_magnet_id", input.id)
+        .order("step_number", { ascending: true });
+
+      if (stepsError) throw new Error(stepsError.message);
+
+      // 3. Generiere einen einzigartigen Slug
+      const timestamp = Date.now();
+      const baseSlug = original.slug.replace(/-kopie-\d+$/, ''); // Entferne vorherige Kopie-Suffixe
+      const newSlug = `${baseSlug}-kopie-${timestamp}`;
+
+      // 4. Erstelle den neuen Lead Magnet
+      const { data: user } = await ctx.supabase.auth.getUser();
+      const { data: newLeadMagnet, error: insertError } = await ctx.supabase
+        .from("lead_magnets")
+        .insert({
+          type: original.type,
+          title: `${original.title} (Kopie)`,
+          description: original.description,
+          slug: newSlug,
+          active: false, // Kopie startet als inaktiv
+          config: original.config,
+          tenant_id: original.tenant_id,
+          created_by: user.user?.id,
+        })
+        .select()
+        .single();
+
+      if (insertError) throw new Error(insertError.message);
+
+      // 5. Kopiere die Flow Steps falls vorhanden
+      if (originalSteps && originalSteps.length > 0) {
+        const newSteps = originalSteps.map((step: any) => ({
+          lead_magnet_id: newLeadMagnet.id,
+          step_number: step.step_number,
+          title: step.title,
+          description: step.description,
+          component_type: step.component_type,
+          config: step.config,
+          conditions: step.conditions,
+        }));
+
+        const { error: insertStepsError } = await ctx.supabase
+          .from("flow_steps")
+          .insert(newSteps);
+
+        if (insertStepsError) throw new Error(insertStepsError.message);
+      }
+
+      return newLeadMagnet;
+    }),
 });
 

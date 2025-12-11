@@ -10,11 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, GlowCard } from "@/components/ui/card";
 import { LeadMagnetBuilder } from "@/components/admin/lead-magnet-builder";
 import { CalculatorBuilder } from "@/components/admin/calculator-builder";
-import { VisualWizardBuilder } from "@/components/admin/visual-wizard-builder";
+import { VisualFormBuilder } from "@/components/admin/visual-form-builder";
 import { PriceVariableManager } from "@/components/admin/price-variable-manager";
 import { LeadMagnetSettings } from "@/components/admin/lead-magnet-settings";
 import { ChartBuilder } from "@/components/admin/chart-builder";
 import { WizardStep, LeadMagnetSettings as SettingsType, PriceVariable } from "@/types/wizard-builder";
+import { getDefaultPriceVariables } from "@/lib/calculator/default-price-variables";
 import { 
   Moon, 
   Sun, 
@@ -62,6 +63,13 @@ export default function NewLeadMagnetPage() {
     );
   }
   const [type, setType] = useState<"ebook" | "checklist" | "quiz" | "calculator">("ebook");
+  
+  // Lade Standard-Preise wenn Typ auf Calculator geändert wird
+  useEffect(() => {
+    if (type === "calculator" && priceVariables.length === 0) {
+      setPriceVariables(getDefaultPriceVariables());
+    }
+  }, [type]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [slug, setSlug] = useState("");
@@ -80,8 +88,14 @@ export default function NewLeadMagnetPage() {
   // Wizard Steps (erweitert)
   const [wizardSteps, setWizardSteps] = useState<WizardStep[]>([]);
 
-  // Preis-Variablen
-  const [priceVariables, setPriceVariables] = useState<PriceVariable[]>([]);
+  // Preis-Variablen - mit Standarddaten initialisieren
+  const [priceVariables, setPriceVariables] = useState<PriceVariable[]>(() => {
+    // Lade Standard-Preise nur für Calculator-Typ
+    if (typeof window !== "undefined") {
+      return getDefaultPriceVariables();
+    }
+    return [];
+  });
 
   // Settings
   const [leadMagnetSettings, setLeadMagnetSettings] = useState<SettingsType>({
@@ -473,18 +487,32 @@ export default function NewLeadMagnetPage() {
                 <div className="p-2.5 rounded-xl bg-amber-500/20">
                   <Sparkles className="h-5 w-5 text-amber-400" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <CardTitle className="text-lg">Wizard-Builder</CardTitle>
-                  <CardDescription>Erstellen Sie Schritte mit Drag & Drop und Live-Preview</CardDescription>
+                  <CardDescription>
+                    Erstellen Sie Schritte mit Drag & Drop und Live-Preview
+                    <a 
+                      href="/docs/WIZARD_BUILDER.md" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="ml-2 text-cyan-400 hover:text-cyan-300 underline text-xs"
+                    >
+                      📖 Dokumentation öffnen
+                    </a>
+                  </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <VisualWizardBuilder
+              <VisualFormBuilder
                 initialSteps={wizardSteps}
                 calculations={calculatorConfig.calculations}
                 priceVariables={priceVariables}
                 onChange={setWizardSteps}
+                onCalculationsChange={(calcs) => setCalculatorConfig({
+                  ...calculatorConfig,
+                  calculations: calcs
+                })}
               />
             </CardContent>
           </GlowCard>

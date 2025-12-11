@@ -295,14 +295,14 @@ export class CalculationEngine {
   ): string {
     switch (format) {
       case "currency":
-        return `${value.toLocaleString("de-DE", {
+        return `CHF ${value.toLocaleString("de-CH", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
-        })} €`;
+        })}`;
       case "percentage":
         return `${value.toFixed(2)}%`;
       case "number":
-        return value.toLocaleString("de-DE");
+        return value.toLocaleString("de-CH");
       default:
         return unit ? `${value} ${unit}` : value.toString();
     }

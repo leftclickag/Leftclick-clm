@@ -46,6 +46,24 @@ interface PDFGeneratorConfig {
   includeChapters?: string[]; // For conditional content based on answers
   template?: "modern" | "classic" | "minimal";
   language?: "de" | "en";
+  // Neue Features
+  pdfSettings?: {
+    sections: {
+      inputSummary: boolean;
+      calculationDetails: boolean;
+      charts: boolean;
+      recommendations: boolean;
+      customSections?: Array<{ title: string; content: string }>;
+    };
+  };
+  calculations?: Array<{ id: string; formula: string; label?: string; result?: number }>;
+  charts?: Array<{
+    id: string;
+    type: string;
+    title: string;
+    data?: any;
+  }>;
+  chartImages?: Record<string, string>; // Chart-ID -> Base64 Image URL
 }
 
 // Create dynamic styles based on branding
@@ -268,6 +286,24 @@ const createStyles = (branding: BrandingConfig) =>
       padding: 4,
       borderRadius: 2,
     },
+    // Chart styles
+    chartContainer: {
+      marginBottom: 20,
+      padding: 15,
+      backgroundColor: "#F9FAFB",
+      borderRadius: 8,
+    },
+    chartTitle: {
+      fontSize: 14,
+      fontWeight: "bold",
+      color: branding.primaryColor,
+      marginBottom: 10,
+    },
+    chartImage: {
+      width: "100%",
+      maxHeight: 200,
+      marginBottom: 10,
+    },
   });
 
 export async function generatePersonalizedPDF(config: PDFGeneratorConfig) {
@@ -279,9 +315,22 @@ export async function generatePersonalizedPDF(config: PDFGeneratorConfig) {
     qrCodeUrl,
     includeChapters,
     template = "modern",
+    pdfSettings,
+    calculations = [],
+    charts = [],
+    chartImages = {},
   } = config;
 
   const styles = createStyles(branding);
+  
+  // Default PDF Settings
+  const sections = pdfSettings?.sections || {
+    inputSummary: true,
+    calculationDetails: true,
+    charts: true,
+    recommendations: true,
+    customSections: [],
+  };
 
   // Generate QR Code if URL provided
   let qrCodeDataUrl: string | null = null;
@@ -374,31 +423,117 @@ export async function generatePersonalizedPDF(config: PDFGeneratorConfig) {
           </View>
         )}
 
-        {/* Answers Summary */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📝 Ihre Angaben</Text>
-          <View style={styles.table}>
-            {Object.entries(submissionData.data || submissionData)
-              .filter(([key]) => !["result", "contact_info"].includes(key))
-              .map(([key, value], index) => (
+        {/* Input Summary Section */}
+        {sections.inputSummary && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>📝 Ihre Angaben</Text>
+            <View style={styles.table}>
+              {Object.entries(submissionData.data || submissionData)
+                .filter(([key]) => !["result", "contact_info", "calculations"].includes(key))
+                .map(([key, value], index) => (
+                  <View
+                    key={key}
+                    style={[
+                      styles.tableRow,
+                      index % 2 === 1 ? styles.tableRowAlt : {},
+                    ]}
+                  >
+                    <Text style={[styles.tableCell, styles.tableCellLabel]}>
+                      {formatLabel(key)}
+                    </Text>
+                    <Text style={styles.tableCell}>{formatValue(value)}</Text>
+                  </View>
+                ))}
+            </View>
+          </View>
+        )}
+
+        {/* Calculation Details Section */}
+        {sections.calculationDetails && calculations.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🔢 Berechnungs-Details</Text>
+            <View style={styles.table}>
+              {calculations.map((calc, index) => (
                 <View
-                  key={key}
+                  key={calc.id}
                   style={[
                     styles.tableRow,
                     index % 2 === 1 ? styles.tableRowAlt : {},
                   ]}
                 >
                   <Text style={[styles.tableCell, styles.tableCellLabel]}>
-                    {formatLabel(key)}
+                    {calc.label || calc.id}
                   </Text>
-                  <Text style={styles.tableCell}>{formatValue(value)}</Text>
+                  <View style={{ flex: 1, paddingHorizontal: 8 }}>
+                    <Text style={[styles.tableCell, { fontSize: 9, fontFamily: "Courier" }]}>
+                      {calc.formula}
+                    </Text>
+                    {calc.result !== undefined && (
+                      <Text style={[styles.tableCell, { color: branding.primaryColor, fontWeight: "bold" }]}>
+                        = {formatValue(calc.result)}
+                      </Text>
+                    )}
+                  </View>
                 </View>
               ))}
+            </View>
           </View>
-        </View>
+        )}
 
-        {/* Dynamic Content Sections (based on answers) */}
-        {includeChapters && includeChapters.length > 0 && (
+        {/* Charts Section */}
+        {sections.charts && charts.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>📊 Diagramme</Text>
+            {charts.map((chart) => {
+              const chartImage = chartImages[chart.id];
+              return (
+                <View key={chart.id} style={{ marginBottom: 20 }}>
+                  <Text style={[styles.sectionTitle, { fontSize: 14, marginBottom: 10 }]}>
+                    {chart.title}
+                  </Text>
+                  {chartImage ? (
+                    <Image
+                      src={chartImage}
+                      style={{
+                        width: "100%",
+                        height: 200,
+                        marginBottom: 10,
+                        objectFit: "contain",
+                      }}
+                    />
+                  ) : (
+                    <View style={[styles.resultBox, { padding: 15 }]}>
+                      <Text style={styles.text}>
+                        Diagramm: {chart.type} - {chart.title}
+                      </Text>
+                      {chart.data && (
+                        <View style={styles.table}>
+                          {Object.entries(chart.data).map(([key, value], idx) => (
+                            <View
+                              key={key}
+                              style={[
+                                styles.tableRow,
+                                idx % 2 === 1 ? styles.tableRowAlt : {},
+                              ]}
+                            >
+                              <Text style={[styles.tableCell, styles.tableCellLabel]}>
+                                {formatLabel(key)}
+                              </Text>
+                              <Text style={styles.tableCell}>{formatValue(value)}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {/* Recommendations Section */}
+        {sections.recommendations && includeChapters && includeChapters.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>
               💡 Personalisierte Empfehlungen
@@ -410,6 +545,18 @@ export async function generatePersonalizedPDF(config: PDFGeneratorConfig) {
               </View>
             ))}
           </View>
+        )}
+
+        {/* Custom Sections */}
+        {sections.customSections && sections.customSections.length > 0 && (
+          <>
+            {sections.customSections.map((customSection, index) => (
+              <View key={index} style={styles.section}>
+                <Text style={styles.sectionTitle}>{customSection.title}</Text>
+                <Text style={styles.text}>{customSection.content}</Text>
+              </View>
+            ))}
+          </>
         )}
 
         {/* QR Code Section */}

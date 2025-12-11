@@ -6,6 +6,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, v
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { WizardStep, WizardField } from "@/types/wizard-builder";
 import { StepEditor } from "./step-editor";
 import { LiveCalculationPreview } from "./live-calculation-preview";
@@ -42,6 +43,8 @@ export function VisualWizardBuilder({
     steps[0]?.id || null
   );
   const [previewMode, setPreviewMode] = useState<"quick" | "expert">("quick");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [stepToDelete, setStepToDelete] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -89,14 +92,21 @@ export function VisualWizardBuilder({
   };
 
   const removeStep = (id: string) => {
-    if (confirm("Möchten Sie diesen Schritt wirklich löschen?")) {
-      const filtered = steps.filter((s) => s.id !== id);
+    setStepToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmRemoveStep = () => {
+    if (stepToDelete) {
+      const filtered = steps.filter((s) => s.id !== stepToDelete);
       const updated = filtered.map((s, idx) => ({ ...s, order: idx + 1 }));
       setSteps(updated);
-      if (selectedStepId === id) {
+      if (selectedStepId === stepToDelete) {
         setSelectedStepId(updated[0]?.id || null);
       }
+      setStepToDelete(null);
     }
+    setDeleteDialogOpen(false);
   };
 
   const updateStep = (id: string, updates: Partial<WizardStep>) => {
@@ -174,6 +184,18 @@ export function VisualWizardBuilder({
           onModeChange={setPreviewMode}
         />
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Schritt löschen"
+        description="Möchten Sie diesen Schritt wirklich löschen? Alle Felder und Konfigurationen gehen verloren."
+        type="delete"
+        confirmText="Löschen"
+        cancelText="Abbrechen"
+        onConfirm={confirmRemoveStep}
+      />
     </div>
   );
 }

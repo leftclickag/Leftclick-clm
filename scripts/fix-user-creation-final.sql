@@ -98,3 +98,4 @@ FROM users;
 COMMENT ON FUNCTION public.handle_new_user IS 
 'Erstellt automatisch einen Eintrag in der users-Tabelle wenn ein neuer Benutzer über die Admin-API oder Auth erstellt wird. Version: 2025-12-10 - Fixed for users table only';
 
+

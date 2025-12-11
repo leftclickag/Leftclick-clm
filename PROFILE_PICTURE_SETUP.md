@@ -52,3 +52,4 @@ Die Migration führt folgende Änderungen durch:
 4. Wähle ein Bild aus (max 5MB)
 5. Das Bild wird automatisch hochgeladen und gespeichert
 
+

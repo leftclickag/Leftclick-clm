@@ -402,3 +402,4 @@ Mögliche Erweiterungen für die Zukunft:
 - [ ] Integration-Templates Marketplace
 - [ ] Automatische API-Discovery
 
+

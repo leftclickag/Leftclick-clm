@@ -9,7 +9,7 @@ export const microsoftTeamsPriceTables: PriceTable[] = [
     name: "Microsoft Phone System Lizenz",
     type: "per_unit",
     data: {
-      unitPrice: 8.0, // € pro User/Monat
+      unitPrice: 8.0, // CHF pro User/Monat
       description: "Grundlizenz für Phone System",
     },
   },
@@ -18,7 +18,7 @@ export const microsoftTeamsPriceTables: PriceTable[] = [
     name: "Calling Plan Domestic",
     type: "per_unit",
     data: {
-      unitPrice: 12.0, // € pro User/Monat
+      unitPrice: 12.0, // CHF pro User/Monat
       description: "Nationale Anrufe",
     },
   },
@@ -27,7 +27,7 @@ export const microsoftTeamsPriceTables: PriceTable[] = [
     name: "Calling Plan International",
     type: "per_unit",
     data: {
-      unitPrice: 24.0, // € pro User/Monat
+      unitPrice: 24.0, // CHF pro User/Monat
       description: "Internationale Anrufe",
     },
   },
@@ -37,7 +37,7 @@ export const microsoftTeamsPriceTables: PriceTable[] = [
     type: "tiered",
     data: {
       tiers: [
-        { min: 1, max: 10, price: 500 }, // € pro Monat
+        { min: 1, max: 10, price: 500 }, // CHF pro Monat
         { min: 11, max: 50, price: 2000 },
         { min: 51, max: 100, price: 5000 },
         { min: 101, price: 10000 },
@@ -50,7 +50,7 @@ export const microsoftTeamsPriceTables: PriceTable[] = [
     name: "Operator Connect",
     type: "per_unit",
     data: {
-      unitPrice: 15.0, // € pro User/Monat
+      unitPrice: 15.0, // CHF pro User/Monat
       description: "Operator Connect Lizenz",
     },
   },
@@ -65,7 +65,7 @@ export const microsoft365PriceTables: PriceTable[] = [
     name: "Microsoft 365 Business Basic",
     type: "flat",
     data: {
-      price: 5.0, // € pro User/Monat
+      price: 5.0, // CHF pro User/Monat
       features: ["Exchange", "OneDrive", "Teams"],
     },
   },
@@ -74,7 +74,7 @@ export const microsoft365PriceTables: PriceTable[] = [
     name: "Microsoft 365 Business Standard",
     type: "flat",
     data: {
-      price: 10.5, // € pro User/Monat
+      price: 10.5, // CHF pro User/Monat
       features: ["Exchange", "OneDrive", "Teams", "Office Apps"],
     },
   },
@@ -83,7 +83,7 @@ export const microsoft365PriceTables: PriceTable[] = [
     name: "Microsoft 365 Business Premium",
     type: "flat",
     data: {
-      price: 20.0, // € pro User/Monat
+      price: 20.0, // CHF pro User/Monat
       features: [
         "Exchange",
         "OneDrive",
@@ -99,7 +99,7 @@ export const microsoft365PriceTables: PriceTable[] = [
     name: "Microsoft 365 E3",
     type: "flat",
     data: {
-      price: 32.0, // € pro User/Monat
+      price: 32.0, // CHF pro User/Monat
       features: ["All Business Features", "Advanced Security", "Compliance"],
     },
   },
@@ -108,7 +108,7 @@ export const microsoft365PriceTables: PriceTable[] = [
     name: "Microsoft 365 E5",
     type: "flat",
     data: {
-      price: 52.0, // € pro User/Monat
+      price: 52.0, // CHF pro User/Monat
       features: [
         "All E3 Features",
         "Advanced Threat Protection",
@@ -144,10 +144,10 @@ export const cloudMigrationPriceTables: PriceTable[] = [
     type: "tiered",
     data: {
       tiers: [
-        { min: 1, max: 4, price: 100 }, // € pro Monat (kleine VMs)
-        { min: 5, max: 8, price: 300 }, // € pro Monat (mittlere VMs)
-        { min: 9, max: 16, price: 600 }, // € pro Monat (große VMs)
-        { min: 17, price: 1200 }, // € pro Monat (sehr große VMs)
+        { min: 1, max: 4, price: 100 }, // CHF pro Monat (kleine VMs)
+        { min: 5, max: 8, price: 300 }, // CHF pro Monat (mittlere VMs)
+        { min: 9, max: 16, price: 600 }, // CHF pro Monat (große VMs)
+        { min: 17, price: 1200 }, // CHF pro Monat (sehr große VMs)
       ],
       description: "Kosten basierend auf vCPU-Anzahl",
     },
@@ -158,7 +158,7 @@ export const cloudMigrationPriceTables: PriceTable[] = [
     type: "tiered",
     data: {
       tiers: [
-        { min: 1, max: 2, price: 80 }, // € pro Monat
+        { min: 1, max: 2, price: 80 }, // CHF pro Monat
         { min: 3, max: 4, price: 250 },
         { min: 5, max: 8, price: 500 },
         { min: 9, price: 1000 },
@@ -171,7 +171,7 @@ export const cloudMigrationPriceTables: PriceTable[] = [
     name: "Migrations-Service",
     type: "per_unit",
     data: {
-      unitPrice: 500, // € pro Server
+      unitPrice: 500, // CHF pro Server
       description: "Einmalige Migrationskosten pro Server",
     },
   },
@@ -186,7 +186,7 @@ export const itOutsourcingPriceTables: PriceTable[] = [
     name: "Support Tier 1",
     type: "per_unit",
     data: {
-      unitPrice: 50, // € pro User/Monat
+      unitPrice: 50, // CHF pro User/Monat
       description: "Basis-Support (8x5)",
     },
   },
@@ -195,7 +195,7 @@ export const itOutsourcingPriceTables: PriceTable[] = [
     name: "Support Tier 2",
     type: "per_unit",
     data: {
-      unitPrice: 100, // € pro User/Monat
+      unitPrice: 100, // CHF pro User/Monat
       description: "Erweiterter Support (24x7)",
     },
   },
@@ -204,7 +204,7 @@ export const itOutsourcingPriceTables: PriceTable[] = [
     name: "Support Tier 3",
     type: "per_unit",
     data: {
-      unitPrice: 150, // € pro User/Monat
+      unitPrice: 150, // CHF pro User/Monat
       description: "Premium Support mit Proaktiver Überwachung",
     },
   },
@@ -213,7 +213,7 @@ export const itOutsourcingPriceTables: PriceTable[] = [
     name: "Security Services",
     type: "per_unit",
     data: {
-      unitPrice: 30, // € pro User/Monat
+      unitPrice: 30, // CHF pro User/Monat
       description: "IT-Security Services",
     },
   },
@@ -222,7 +222,7 @@ export const itOutsourcingPriceTables: PriceTable[] = [
     name: "Cloud Services",
     type: "per_unit",
     data: {
-      unitPrice: 40, // € pro User/Monat
+      unitPrice: 40, // CHF pro User/Monat
       description: "Cloud-Management Services",
     },
   },
