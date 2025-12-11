@@ -22,6 +22,7 @@ import {
   AlertCircle,
   Upload
 } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
 interface UserProfile {
   id: string;
@@ -48,6 +49,7 @@ export default function ProfilePage() {
   const [uploading, setUploading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const toast = useToast();
   
   // Editable fields
   const [displayName, setDisplayName] = useState("");
@@ -62,70 +64,127 @@ export default function ProfilePage() {
   }, []);
 
   async function loadProfile() {
+    console.log('📋 Lade Profil...');
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     
-    if (user) {
-      // Get user profile
-      const { data: profileData } = await supabase
-        .from("users")
+    console.log('User geladen:', user?.id, user?.email);
+    
+    if (userError) {
+      console.error('❌ Fehler beim Laden des Users:', userError);
+      setLoading(false);
+      return;
+    }
+    
+    if (!user) {
+      console.error('❌ Kein User eingeloggt');
+      setLoading(false);
+      return;
+    }
+    
+    // Get user profile
+    console.log('📋 Lade User-Profil für ID:', user.id);
+    const { data: profileData, error: profileError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+    
+    if (profileError) {
+      console.error('❌ Fehler beim Laden des Profils:', profileError);
+      setLoading(false);
+      return;
+    }
+    
+    console.log('✅ Profil geladen:', profileData);
+    
+    if (profileData) {
+      setProfile(profileData);
+      setDisplayName(user.user_metadata?.full_name || user.email?.split("@")[0] || "");
+      setAvatarUrl(profileData.avatar_url);
+      
+      console.log('Avatar URL:', profileData.avatar_url);
+      
+      // Get tenant info
+      const { data: tenantData } = await supabase
+        .from("tenants")
         .select("*")
-        .eq("id", user.id)
+        .eq("id", profileData.tenant_id)
         .single();
       
-      if (profileData) {
-        setProfile(profileData);
-        setDisplayName(user.user_metadata?.full_name || user.email?.split("@")[0] || "");
-        setAvatarUrl(profileData.avatar_url);
-        
-        // Get tenant info
-        const { data: tenantData } = await supabase
-          .from("tenants")
-          .select("*")
-          .eq("id", profileData.tenant_id)
-          .single();
-        
-        if (tenantData) {
-          setTenant(tenantData);
-        }
+      if (tenantData) {
+        setTenant(tenantData);
+        console.log('✅ Tenant geladen:', tenantData.name);
       }
+    } else {
+      console.error('❌ Profil-Daten sind leer');
     }
+    
     setLoading(false);
+    console.log('✅ Profil-Laden abgeschlossen');
   }
 
   async function handleAvatarUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    console.log('🖼️ handleAvatarUpload aufgerufen');
+    
     const file = event.target.files?.[0];
-    if (!file || !profile) return;
+    console.log('Datei ausgewählt:', file?.name, file?.size, file?.type);
+    
+    if (!file) {
+      console.log('❌ Keine Datei ausgewählt');
+      return;
+    }
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Bitte wähle eine Bilddatei aus.');
+      console.log('❌ Ungültiger Dateityp:', file.type);
+      toast.error('Bitte wähle eine Bilddatei aus.');
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('Die Datei ist zu groß. Maximal 5MB erlaubt.');
+      console.log('❌ Datei zu groß:', file.size);
+      toast.error('Die Datei ist zu groß. Maximal 5MB erlaubt.');
       return;
     }
 
+    console.log('✅ Validierung erfolgreich, starte Upload...');
     setUploading(true);
     const supabase = createClient();
 
     try {
       // Get current user to ensure we have the correct ID
-      const { data: { user } } = await supabase.auth.getUser();
+      console.log('🔍 Hole aktuellen User...');
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error('❌ User-Fehler:', userError);
+        throw new Error('Fehler beim Abrufen des Users: ' + userError.message);
+      }
+      
       if (!user) {
+        console.error('❌ Kein User gefunden');
         throw new Error('Nicht angemeldet');
       }
+      
+      console.log('✅ User gefunden:', user.id, user.email);
 
       // Delete old avatar if exists
-      if (profile.avatar_url) {
-        const oldPath = profile.avatar_url.split('/').pop();
+      if (avatarUrl) {
+        console.log('🗑️ Lösche altes Avatar:', avatarUrl);
+        const oldPath = avatarUrl.split('/avatars/').pop();
         if (oldPath) {
-          await supabase.storage
+          const { error: deleteError } = await supabase.storage
             .from('avatars')
-            .remove([`${user.id}/${oldPath}`]);
+            .remove([oldPath]);
+          
+          if (deleteError) {
+            console.warn('⚠️ Fehler beim Löschen des alten Avatars:', deleteError);
+            // Continue anyway, old file might not exist
+          } else {
+            console.log('✅ Altes Avatar gelöscht');
+          }
         }
       }
 
@@ -168,18 +227,31 @@ export default function ProfilePage() {
         throw new Error(`Datenbank-Update fehlgeschlagen: ${updateError.message}`);
       }
 
-      console.log('Profile updated successfully');
+      console.log('✅ Profile updated successfully');
 
+      // Update state
       setAvatarUrl(publicUrl);
-      setProfile({ ...profile, avatar_url: publicUrl });
+      if (profile) {
+        setProfile({ ...profile, avatar_url: publicUrl });
+      }
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
+      
+      console.log('🎉 Upload abgeschlossen!');
+      
+      // Reload profile to ensure consistency
+      await loadProfile();
+      toast.success('Profilbild erfolgreich hochgeladen!');
     } catch (error) {
-      console.error('Error uploading avatar:', error);
+      console.error('❌ Error uploading avatar:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
-      alert(`Fehler beim Hochladen des Profilbilds: ${errorMessage}`);
+      toast.error(`Fehler beim Hochladen des Profilbilds: ${errorMessage}`);
     } finally {
       setUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   }
 
@@ -228,6 +300,14 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* Uploading Message */}
+      {uploading && (
+        <div className="animate-fade-in flex items-center gap-3 p-4 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400">
+          <div className="h-5 w-5 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
+          <span>Profilbild wird hochgeladen...</span>
+        </div>
+      )}
+
       <div className="grid gap-6">
         {/* Profile Picture & Basic Info */}
         <GlowCard className="animate-fade-in" style={{ animationDelay: "0.1s" }}>
@@ -267,9 +347,14 @@ export default function ProfilePage() {
                   </div>
                 )}
                 <button
-                  onClick={() => fileInputRef.current?.click()}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    console.log('🖱️ Upload-Button geklickt');
+                    fileInputRef.current?.click();
+                  }}
                   disabled={uploading}
-                  className="absolute inset-0 rounded-2xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                  className="absolute inset-0 rounded-2xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer disabled:cursor-not-allowed"
                 >
                   {uploading ? (
                     <div className="h-6 w-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />

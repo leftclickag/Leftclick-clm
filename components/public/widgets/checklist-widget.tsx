@@ -84,6 +84,13 @@ export function ChecklistWidget({ leadMagnet }: ChecklistWidgetProps) {
       answers,
     });
 
+    // Trigger API-Push an externe Systeme
+    const submissionId = tracker.getSubmissionId();
+    if (submissionId) {
+      const { triggerLeadPush } = await import("@/lib/api-integration/trigger-push");
+      triggerLeadPush(submissionId, "lead.completed");
+    }
+
     setCompleted(true);
   };
 

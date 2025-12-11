@@ -4,6 +4,8 @@ import { leadMagnetsRouter } from "./lead-magnets";
 import { usersRouter } from "./users";
 import { inviteCodesRouter } from "./invite-codes";
 import { leadsRouter } from "./leads";
+import { permissionsRouter } from "./permissions";
+import { apiIntegrationsRouter } from "./api-integrations";
 
 export const appRouter = router({
   healthcheck: publicProcedure.query(() => {
@@ -13,6 +15,8 @@ export const appRouter = router({
   users: usersRouter,
   inviteCodes: inviteCodesRouter,
   leads: leadsRouter,
+  permissions: permissionsRouter,
+  apiIntegrations: apiIntegrationsRouter,
 });
 
 export type AppRouter = typeof appRouter;

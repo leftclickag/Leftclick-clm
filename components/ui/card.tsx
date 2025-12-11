@@ -9,7 +9,7 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "relative rounded-xl border border-border bg-card/60 backdrop-blur-xl text-card-foreground shadow-xl transition-all duration-300 hover:border-purple-500/30 hover:shadow-2xl hover:shadow-purple-500/10 overflow-hidden group",
+      "relative rounded-xl border border-border bg-card/60 backdrop-blur-xl text-card-foreground shadow-xl transition-all duration-300 hover:border-purple-500/30 hover:shadow-2xl hover:shadow-purple-500/10 group",
       className
     )}
     {...props}
@@ -84,7 +84,7 @@ const GlowCard = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "relative rounded-xl border border-purple-500/20 bg-card backdrop-blur-xl text-card-foreground shadow-lg shadow-purple-500/10 transition-all duration-500 hover:border-purple-500/40 hover:shadow-purple-500/20 hover:shadow-xl overflow-hidden group",
+      "relative rounded-xl border border-purple-500/20 bg-card backdrop-blur-xl text-card-foreground shadow-lg shadow-purple-500/10 transition-all duration-500 hover:border-purple-500/40 hover:shadow-purple-500/20 hover:shadow-xl group",
       "before:absolute before:inset-0 before:rounded-xl before:bg-gradient-to-r before:from-purple-500/10 before:via-transparent before:to-cyan-500/10 before:opacity-0 before:transition-opacity before:duration-500 before:pointer-events-none group-hover:before:opacity-100",
       className
     )}

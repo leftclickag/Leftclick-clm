@@ -16,27 +16,56 @@ import {
   Users,
   Ticket,
   Contact,
+  ChevronUp,
+  HelpCircle,
+  Shield,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { trpc } from "@/lib/trpc/client";
+import { Permission } from "@/types/permissions";
 
-const navigation = [
-  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { name: "Lead-Magnete", href: "/admin/lead-magnets", icon: FileText },
-  { name: "Leads", href: "/admin/leads", icon: Contact },
-  { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-  { name: "Benutzer", href: "/admin/users", icon: Users },
-  { name: "Invite Codes", href: "/admin/invite-codes", icon: Ticket },
-  { name: "Einstellungen", href: "/admin/settings", icon: Settings },
-  { name: "Mein Profil", href: "/admin/profile", icon: User },
+type NavItem = {
+  name: string;
+  href: string;
+  icon: any;
+  requiredPermission?: Permission; // Optional - wenn nicht gesetzt, für alle sichtbar
+};
+
+const navigation: NavItem[] = [
+  { name: "Dashboard", href: "/admin", icon: LayoutDashboard, requiredPermission: "dashboard.view" },
+  { name: "Lead-Magnete", href: "/admin/lead-magnets", icon: FileText, requiredPermission: "lead_magnets.view" },
+  { name: "Leads", href: "/admin/leads", icon: Contact, requiredPermission: "leads.view" },
+  { name: "Analytics", href: "/admin/analytics", icon: BarChart3, requiredPermission: "analytics.view" },
+  { name: "Benutzer", href: "/admin/users", icon: Users, requiredPermission: "users.view" },
+  { name: "Invite Codes", href: "/admin/invite-codes", icon: Ticket, requiredPermission: "invite_codes.view" },
+  { name: "Einstellungen", href: "/admin/settings", icon: Settings, requiredPermission: "settings.view" },
+  { name: "Berechtigungen", href: "/admin/permissions", icon: Shield, requiredPermission: "permissions.view" },
+  { name: "Hilfe", href: "/admin/help", icon: HelpCircle }, // Keine Berechtigung erforderlich - für alle sichtbar
 ];
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const { data: permissionsData } = trpc.permissions.getCurrentUserPermissions.useQuery();
 
   const handleSignOut = async () => {
     await signOut();
     window.location.href = "/auth/login";
   };
+
+  const hasPermission = (permission?: Permission) => {
+    if (!permission) return true; // Keine Berechtigung erforderlich
+    return permissionsData?.permissions?.includes(permission) ?? false;
+  };
+
+  // Filtere Navigation basierend auf Berechtigungen
+  const visibleNavigation = navigation.filter(item => hasPermission(item.requiredPermission));
 
   return (
     <div className="flex w-72 flex-col glass-strong border-r border-border relative overflow-hidden">
@@ -64,7 +93,7 @@ export function AdminSidebar() {
         <p className="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
           Navigation
         </p>
-        {navigation.map((item, index) => {
+        {visibleNavigation.map((item, index) => {
           const isActive = pathname === item.href || 
             (item.href !== "/admin" && pathname.startsWith(item.href));
           return (
@@ -123,17 +152,43 @@ export function AdminSidebar() {
         {/* Theme Toggle */}
         <ThemeToggle />
         
-        {/* Sign Out Button */}
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-3 text-muted-foreground hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 rounded-xl px-4 py-3 h-auto"
-          onClick={handleSignOut}
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary/50 dark:bg-white/5">
-            <LogOut className="h-5 w-5" />
-          </div>
-          <span className="font-medium">Abmelden</span>
-        </Button>
+        {/* Profile Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-full justify-between gap-3 text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-secondary/50 dark:hover:bg-white/5 rounded-xl px-4 py-3 h-auto"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-purple-600/20 to-cyan-500/20 border border-purple-500/20">
+                  <User className="h-5 w-5" />
+                </div>
+                <span className="font-medium">Mein Profil</span>
+              </div>
+              <ChevronUp className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent 
+            side="top" 
+            align="end" 
+            className="w-56 glass-strong border-border/50"
+          >
+            <Link href="/admin/profile">
+              <DropdownMenuItem className="cursor-pointer gap-2 py-2">
+                <User className="h-4 w-4" />
+                <span>Mein Profil</span>
+              </DropdownMenuItem>
+            </Link>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              className="cursor-pointer gap-2 py-2 text-red-500 dark:text-red-400 focus:text-red-500 dark:focus:text-red-400 focus:bg-red-500/10"
+              onClick={handleSignOut}
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Abmelden</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

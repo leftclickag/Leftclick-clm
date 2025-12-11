@@ -128,9 +128,25 @@ body.light {
   background: linear-gradient(180deg, hsl(330 81% 70%), hsl(262 83% 70%));
 }
 
-/* Selection */
+/* Selection - Text Highlighting */
 ::selection {
-  background: hsla(var(--neon-purple), 0.4);
+  background: hsl(var(--neon-purple) / 0.4);
+  color: hsl(var(--foreground));
+}
+
+::-moz-selection {
+  background: hsl(var(--neon-purple) / 0.4);
+  color: hsl(var(--foreground));
+}
+
+/* Light Mode Selection */
+.light ::selection {
+  background: hsl(var(--neon-purple) / 0.3);
+  color: hsl(var(--foreground));
+}
+
+.light ::-moz-selection {
+  background: hsl(var(--neon-purple) / 0.3);
   color: hsl(var(--foreground));
 }
 

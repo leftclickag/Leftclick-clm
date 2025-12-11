@@ -35,9 +35,11 @@ import {
   Snowflake,
   Sun,
   RefreshCw,
+  Info,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { QuickTooltip } from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
@@ -207,69 +209,86 @@ export function AnalyticsDashboard({
     <div className="space-y-6">
       {/* Header with Controls */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
-          <p className="text-gray-500">Echtzeit-Übersicht deiner Lead-Performance</p>
+        <div className="flex items-center gap-2">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
+            <p className="text-gray-500">Echtzeit-Übersicht deiner Lead-Performance</p>
+          </div>
+          <QuickTooltip content="Hier sehen Sie alle wichtigen Metriken und Statistiken zu Ihren Lead-Magneten in Echtzeit">
+            <Info className="h-4 w-4 text-gray-400 cursor-help" />
+          </QuickTooltip>
         </div>
         <div className="flex items-center gap-3">
-          <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-36">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="24h">Letzte 24h</SelectItem>
-              <SelectItem value="7d">Letzte 7 Tage</SelectItem>
-              <SelectItem value="30d">Letzte 30 Tage</SelectItem>
-              <SelectItem value="90d">Letzte 90 Tage</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            variant={isLiveUpdating ? "default" : "outline"}
-            size="sm"
-            onClick={() => setIsLiveUpdating(!isLiveUpdating)}
-            className={isLiveUpdating ? "bg-green-600 hover:bg-green-700" : ""}
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${isLiveUpdating ? "animate-spin" : ""}`}
-            />
-            {isLiveUpdating ? "Live" : "Live Updates"}
-          </Button>
+          <QuickTooltip content="Wählen Sie den Zeitraum für die Analyse">
+            <Select value={dateRange} onValueChange={setDateRange}>
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="24h">Letzte 24h</SelectItem>
+                <SelectItem value="7d">Letzte 7 Tage</SelectItem>
+                <SelectItem value="30d">Letzte 30 Tage</SelectItem>
+                <SelectItem value="90d">Letzte 90 Tage</SelectItem>
+              </SelectContent>
+            </Select>
+          </QuickTooltip>
+          <QuickTooltip content="Aktivieren Sie Live-Updates, um Daten in Echtzeit zu aktualisieren">
+            <Button
+              variant={isLiveUpdating ? "default" : "outline"}
+              size="sm"
+              onClick={() => setIsLiveUpdating(!isLiveUpdating)}
+              className={isLiveUpdating ? "bg-green-600 hover:bg-green-700" : ""}
+            >
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${isLiveUpdating ? "animate-spin" : ""}`}
+              />
+              {isLiveUpdating ? "Live" : "Live Updates"}
+            </Button>
+          </QuickTooltip>
         </div>
       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          title="Gesamt Leads"
-          value={stats.totalLeads.toLocaleString("de-DE")}
-          change={stats.totalLeadsChange}
-          icon={Users}
-          color="indigo"
-        />
-        <MetricCard
-          title="Conversion Rate"
-          value={`${stats.conversionRate}%`}
-          change={stats.conversionRateChange}
-          icon={Target}
-          color="green"
-        />
-        <MetricCard
-          title="Ø Abschlusszeit"
-          value={`${Math.floor(stats.avgTimeToComplete / 60)}:${String(
-            stats.avgTimeToComplete % 60
-          ).padStart(2, "0")}`}
-          change={stats.avgTimeChange}
-          icon={Clock}
-          color="purple"
-          invertChange
-        />
-        <MetricCard
-          title="Gerade Aktiv"
-          value={stats.activeNow.toString()}
-          icon={MousePointerClick}
-          color="orange"
-          isLive
-        />
+        <QuickTooltip content="Gesamtanzahl der erfassten Leads im gewählten Zeitraum">
+          <MetricCard
+            title="Gesamt Leads"
+            value={stats.totalLeads.toLocaleString("de-DE")}
+            change={stats.totalLeadsChange}
+            icon={Users}
+            color="indigo"
+          />
+        </QuickTooltip>
+        <QuickTooltip content="Prozentsatz der Besucher, die den Lead-Magnet abgeschlossen haben">
+          <MetricCard
+            title="Conversion Rate"
+            value={`${stats.conversionRate}%`}
+            change={stats.conversionRateChange}
+            icon={Target}
+            color="green"
+          />
+        </QuickTooltip>
+        <QuickTooltip content="Durchschnittliche Zeit, die Benutzer zum Abschließen des Lead-Magnets benötigen">
+          <MetricCard
+            title="Ø Abschlusszeit"
+            value={`${Math.floor(stats.avgTimeToComplete / 60)}:${String(
+              stats.avgTimeToComplete % 60
+            ).padStart(2, "0")}`}
+            change={stats.avgTimeChange}
+            icon={Clock}
+            color="purple"
+            invertChange
+          />
+        </QuickTooltip>
+        <QuickTooltip content="Anzahl der Benutzer, die gerade aktiv mit dem Lead-Magnet interagieren">
+          <MetricCard
+            title="Gerade Aktiv"
+            value={stats.activeNow.toString()}
+            icon={MousePointerClick}
+            color="orange"
+            isLive
+          />
+        </QuickTooltip>
       </div>
 
       {/* Charts Row 1 */}
@@ -277,8 +296,15 @@ export function AnalyticsDashboard({
         {/* Trend Chart */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Lead-Entwicklung</CardTitle>
-            <CardDescription>Impressionen, Starts und Conversions über Zeit</CardDescription>
+            <div className="flex items-center gap-2">
+              <div>
+                <CardTitle>Lead-Entwicklung</CardTitle>
+                <CardDescription>Impressionen, Starts und Conversions über Zeit</CardDescription>
+              </div>
+              <QuickTooltip content="Visualisierung der täglichen Lead-Generierung: Impressionen (wie oft gesehen) vs. Abschlüsse (vollständig ausgefüllte Lead-Magneten)">
+                <Info className="h-4 w-4 text-gray-400 cursor-help" />
+              </QuickTooltip>
+            </div>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -329,8 +355,15 @@ export function AnalyticsDashboard({
         {/* Conversion Funnel */}
         <Card>
           <CardHeader>
-            <CardTitle>Conversion Funnel</CardTitle>
-            <CardDescription>Von Impression bis Conversion</CardDescription>
+            <div className="flex items-center gap-2">
+              <div>
+                <CardTitle>Conversion Funnel</CardTitle>
+                <CardDescription>Von Impression bis Conversion</CardDescription>
+              </div>
+              <QuickTooltip content="Zeigt den gesamten Conversion-Funnel: wie viele Benutzer den Lead-Magnet sehen, starten, bearbeiten und abschließen">
+                <Info className="h-4 w-4 text-gray-400 cursor-help" />
+              </QuickTooltip>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -363,10 +396,15 @@ export function AnalyticsDashboard({
         {/* Traffic Sources */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="h-5 w-5" />
-              Traffic-Quellen
-            </CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5" />
+                Traffic-Quellen
+              </CardTitle>
+              <QuickTooltip content="Übersicht, woher Ihre Leads kommen: Google Ads, LinkedIn, Direct, Newsletter usw.">
+                <Info className="h-4 w-4 text-gray-400 cursor-help" />
+              </QuickTooltip>
+            </div>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -403,7 +441,12 @@ export function AnalyticsDashboard({
         {/* Device Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle>Geräte-Verteilung</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle>Geräte-Verteilung</CardTitle>
+              <QuickTooltip content="Zeigt die Verteilung der verwendeten Geräte: Desktop, Mobile, Tablet">
+                <Info className="h-4 w-4 text-gray-400 cursor-help" />
+              </QuickTooltip>
+            </div>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
@@ -454,8 +497,15 @@ export function AnalyticsDashboard({
         {/* Lead Scores */}
         <Card>
           <CardHeader>
-            <CardTitle>Lead-Qualität</CardTitle>
-            <CardDescription>Verteilung nach Score</CardDescription>
+            <div className="flex items-center gap-2">
+              <div>
+                <CardTitle>Lead-Qualität</CardTitle>
+                <CardDescription>Verteilung nach Score</CardDescription>
+              </div>
+              <QuickTooltip content="Lead-Qualität basierend auf Scoring: Hot (hohe Kaufbereitschaft), Warm (interessiert), Cold (frühe Phase)">
+                <Info className="h-4 w-4 text-gray-400 cursor-help" />
+              </QuickTooltip>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

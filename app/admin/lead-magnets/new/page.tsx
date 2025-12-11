@@ -1,13 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
+import { usePermission } from "@/components/permissions/permission-guard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, GlowCard } from "@/components/ui/card";
 import { LeadMagnetBuilder } from "@/components/admin/lead-magnet-builder";
+import { CalculatorBuilder } from "@/components/admin/calculator-builder";
+import { VisualWizardBuilder } from "@/components/admin/visual-wizard-builder";
+import { PriceVariableManager } from "@/components/admin/price-variable-manager";
+import { LeadMagnetSettings } from "@/components/admin/lead-magnet-settings";
+import { ChartBuilder } from "@/components/admin/chart-builder";
+import { WizardStep, LeadMagnetSettings as SettingsType, PriceVariable } from "@/types/wizard-builder";
 import { 
   Moon, 
   Sun, 
@@ -22,13 +29,38 @@ import {
   Mail,
   Download,
   UserPlus,
-  ToggleRight
+  ToggleRight,
+  AlertCircle,
+  Sigma,
+  DollarSign,
+  BarChart3,
+  Settings as SettingsIcon
 } from "lucide-react";
 
 type ThemeMode = "light" | "dark" | "system";
 
 export default function NewLeadMagnetPage() {
   const router = useRouter();
+  const hasPermission = usePermission("lead_magnets.create");
+  
+  // Prüfe Berechtigung
+  useEffect(() => {
+    if (hasPermission === false) {
+      router.push("/admin?error=insufficient_permissions");
+    }
+  }, [hasPermission, router]);
+  
+  // Zeige nichts an, während die Berechtigung geprüft wird
+  if (!hasPermission) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">Berechtigung wird geprüft...</p>
+        </div>
+      </div>
+    );
+  }
   const [type, setType] = useState<"ebook" | "checklist" | "quiz" | "calculator">("ebook");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -36,6 +68,64 @@ export default function NewLeadMagnetPage() {
   const [active, setActive] = useState(true);
   const [config, setConfig] = useState<Record<string, any>>({});
   const [themeMode, setThemeMode] = useState<ThemeMode>("system");
+  
+  // Calculator-spezifische Konfiguration
+  const [calculatorConfig, setCalculatorConfig] = useState({
+    wizardMode: true,
+    showProgress: true,
+    calculations: [],
+    outputs: [],
+  });
+
+  // Wizard Steps (erweitert)
+  const [wizardSteps, setWizardSteps] = useState<WizardStep[]>([]);
+
+  // Preis-Variablen
+  const [priceVariables, setPriceVariables] = useState<PriceVariable[]>([]);
+
+  // Settings
+  const [leadMagnetSettings, setLeadMagnetSettings] = useState<SettingsType>({
+    email: {
+      sendToVisitor: true,
+      sendToTeam: false,
+    },
+    pdf: {
+      generate: true,
+      attachToEmail: true,
+      branding: {
+        primaryColor: "#3b82f6",
+        secondaryColor: "#8b5cf6",
+      },
+      sections: {
+        inputSummary: true,
+        calculationDetails: true,
+        charts: true,
+        recommendations: false,
+        customSections: [],
+      },
+    },
+    contactGate: {
+      required: true,
+      fields: ["name", "email"],
+      teaserType: "blurred_total",
+      showBeforeContact: {
+        totalResult: true,
+        partialResults: false,
+        chartPreview: false,
+      },
+    },
+    priceVariables: [],
+    charts: [],
+    expertModeEnabled: true,
+  });
+
+  // Update settings when priceVariables change
+  useEffect(() => {
+    setLeadMagnetSettings((prev) => ({
+      ...prev,
+      priceVariables: priceVariables,
+    }));
+  }, [priceVariables]);
   const [allowUserThemeToggle, setAllowUserThemeToggle] = useState(true);
 
   const createMutation = trpc.leadMagnets.create.useMutation({
@@ -46,17 +136,35 @@ export default function NewLeadMagnetPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Merge calculator config for calculator type
+    const finalConfig = type === "calculator" 
+      ? {
+          ...config,
+          themeMode,
+          allowUserThemeToggle,
+          ...calculatorConfig,
+          steps: wizardSteps,
+          priceVariables: priceVariables,
+          settings: {
+            ...leadMagnetSettings,
+            priceVariables: priceVariables,
+          },
+        }
+      : {
+          ...config,
+          themeMode,
+          allowUserThemeToggle,
+          steps: config.steps || [],
+        };
+    
     createMutation.mutate({
       type,
       title,
       description,
       slug,
       active,
-      config: {
-        ...config,
-        themeMode,
-        allowUserThemeToggle,
-      },
+      config: finalConfig,
     });
   };
 
@@ -276,20 +384,123 @@ export default function NewLeadMagnetPage() {
                 </div>
               </div>
             </div>
+
+            {/* Expert Mode Toggle (nur für Kalkulatoren) */}
+            {type === "calculator" && (
+              <div className="mt-4 pt-4 border-t border-white/10">
+                <div className="flex items-center gap-4 p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors">
+                  <input
+                    type="checkbox"
+                    id="expertModeEnabled"
+                    checked={leadMagnetSettings.expertModeEnabled}
+                    onChange={(e) =>
+                      setLeadMagnetSettings({
+                        ...leadMagnetSettings,
+                        expertModeEnabled: e.target.checked,
+                      })
+                    }
+                    className="h-5 w-5 rounded border-white/20 bg-white/10 text-cyan-500 focus:ring-cyan-500/50"
+                  />
+                  <div className="p-2 rounded-lg bg-white/10">
+                    <Zap className="h-4 w-4 text-cyan-400" />
+                  </div>
+                  <div className="flex-1">
+                    <Label htmlFor="expertModeEnabled" className="font-medium cursor-pointer">
+                      Experten-Modus aktivieren
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Besucher können zwischen Schnell-Modus (nur Pflichtfelder) und Experten-Modus (alle Felder) wählen
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </GlowCard>
 
-        {/* Wizard Config */}
-        {(type === "calculator" || type === "checklist" || type === "quiz") && (
+        {/* Preis- und Variablen-Manager */}
+        {type === "calculator" && (
           <GlowCard className="animate-fade-in" style={{ animationDelay: "0.4s" }}>
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-emerald-500/20">
+                  <DollarSign className="h-5 w-5 text-emerald-400" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Preise & Variablen</CardTitle>
+                  <CardDescription>Verwalten Sie alle Preise und Konstanten zentral</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <PriceVariableManager
+                variables={priceVariables}
+                calculations={calculatorConfig.calculations}
+                onChange={setPriceVariables}
+              />
+            </CardContent>
+          </GlowCard>
+        )}
+
+        {/* Calculator Config - Berechnungen */}
+        {type === "calculator" && (
+          <GlowCard className="animate-fade-in" style={{ animationDelay: "0.45s" }}>
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-purple-500/20">
+                  <Sigma className="h-5 w-5 text-purple-400" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Berechnungen & Ausgaben</CardTitle>
+                  <CardDescription>Definiere Formeln und Ergebnis-Ausgaben</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <CalculatorBuilder
+                initialConfig={calculatorConfig}
+                onChange={(newConfig) => setCalculatorConfig(newConfig)}
+              />
+            </CardContent>
+          </GlowCard>
+        )}
+
+        {/* Visual Wizard Builder - NEU für Kalkulatoren */}
+        {type === "calculator" && (
+          <GlowCard className="animate-fade-in" style={{ animationDelay: "0.5s" }}>
             <CardHeader className="pb-4">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-amber-500/20">
                   <Sparkles className="h-5 w-5 text-amber-400" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Wizard-Konfiguration</CardTitle>
-                  <CardDescription>Erstelle Schritt-für-Schritt-Flows</CardDescription>
+                  <CardTitle className="text-lg">Wizard-Builder</CardTitle>
+                  <CardDescription>Erstellen Sie Schritte mit Drag & Drop und Live-Preview</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <VisualWizardBuilder
+                initialSteps={wizardSteps}
+                calculations={calculatorConfig.calculations}
+                priceVariables={priceVariables}
+                onChange={setWizardSteps}
+              />
+            </CardContent>
+          </GlowCard>
+        )}
+
+        {/* Wizard Config - Schritte (für Checklist/Quiz) */}
+        {(type === "checklist" || type === "quiz") && (
+          <GlowCard className="animate-fade-in" style={{ animationDelay: "0.5s" }}>
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-amber-500/20">
+                  <Sparkles className="h-5 w-5 text-amber-400" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Wizard-Schritte</CardTitle>
+                  <CardDescription>Erstelle Schritt-für-Schritt-Flows für die Dateneingabe</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -298,6 +509,55 @@ export default function NewLeadMagnetPage() {
                 onSave={(steps) => {
                   setConfig((prev) => ({ ...prev, steps }));
                 }}
+              />
+            </CardContent>
+          </GlowCard>
+        )}
+
+        {/* Diagramm-Builder */}
+        {type === "calculator" && (
+          <GlowCard className="animate-fade-in" style={{ animationDelay: "0.55s" }}>
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-cyan-500/20">
+                  <BarChart3 className="h-5 w-5 text-cyan-400" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Diagramme</CardTitle>
+                  <CardDescription>Visualisieren Sie Ihre Ergebnisse mit Diagrammen</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ChartBuilder
+                charts={leadMagnetSettings.charts}
+                calculations={calculatorConfig.calculations}
+                onChange={(charts) =>
+                  setLeadMagnetSettings({ ...leadMagnetSettings, charts })
+                }
+              />
+            </CardContent>
+          </GlowCard>
+        )}
+
+        {/* Lead-Magnet Settings */}
+        {type === "calculator" && (
+          <GlowCard className="animate-fade-in" style={{ animationDelay: "0.6s" }}>
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-blue-500/20">
+                  <SettingsIcon className="h-5 w-5 text-blue-400" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Einstellungen</CardTitle>
+                  <CardDescription>E-Mail, PDF, Kontaktdaten-Gate und mehr</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <LeadMagnetSettings
+                settings={leadMagnetSettings}
+                onChange={setLeadMagnetSettings}
               />
             </CardContent>
           </GlowCard>

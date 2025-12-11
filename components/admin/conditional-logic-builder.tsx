@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, ArrowRight, GitBranch, Eye, EyeOff, Zap } from "lucide-react";
+import { Plus, Trash2, ArrowRight, GitBranch, Eye, EyeOff, Zap, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { QuickTooltip } from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
@@ -100,10 +101,15 @@ export function ConditionalLogicBuilder({
       {/* Visual Flow Preview */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-yellow-500" />
-            Flow Übersicht
-          </CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-yellow-500" />
+              Flow Übersicht
+            </CardTitle>
+            <QuickTooltip content="Visuelle Darstellung Ihres Wizard-Flows. Schritte mit gelber Markierung haben Bedingungen. Klicken Sie auf einen Schritt, um Bedingungen zu bearbeiten.">
+              <Info className="h-4 w-4 text-gray-400 cursor-help" />
+            </QuickTooltip>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2 overflow-x-auto pb-4">
@@ -156,19 +162,26 @@ export function ConditionalLogicBuilder({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>
-                Bedingungen für Schritt{" "}
-                {steps.find((s) => s.id === selectedStep)?.step_number}:{" "}
-                {steps.find((s) => s.id === selectedStep)?.title}
-              </span>
-              <Button
-                size="sm"
-                onClick={() => addCondition(selectedStep)}
-                className="bg-indigo-600 hover:bg-indigo-700"
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Bedingung hinzufügen
-              </Button>
+              <div className="flex items-center gap-2">
+                <span>
+                  Bedingungen für Schritt{" "}
+                  {steps.find((s) => s.id === selectedStep)?.step_number}:{" "}
+                  {steps.find((s) => s.id === selectedStep)?.title}
+                </span>
+                <QuickTooltip content="Bedingungen bestimmen, wann dieser Schritt angezeigt, übersprungen oder zu einem anderen Schritt weitergeleitet wird">
+                  <Info className="h-4 w-4 text-gray-400 cursor-help" />
+                </QuickTooltip>
+              </div>
+              <QuickTooltip content="Neue Bedingung für diesen Schritt hinzufügen">
+                <Button
+                  size="sm"
+                  onClick={() => addCondition(selectedStep)}
+                  className="bg-indigo-600 hover:bg-indigo-700"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Bedingung hinzufügen
+                </Button>
+              </QuickTooltip>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -319,7 +332,12 @@ function ConditionRow({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         {/* Condition Type */}
         <div>
-          <Label className="text-xs">Aktion</Label>
+          <div className="flex items-center gap-1 mb-2">
+            <Label className="text-xs">Aktion</Label>
+            <QuickTooltip content="Zeigen wenn (anzeigen), Überspringen wenn (auslassen), Weiterleiten zu (Schritt wechseln)">
+              <Info className="h-3 w-3 text-gray-400 cursor-help" />
+            </QuickTooltip>
+          </div>
           <Select
             value={condition.condition_type}
             onValueChange={(v) =>
@@ -341,7 +359,12 @@ function ConditionRow({
 
         {/* Source Field */}
         <div>
-          <Label className="text-xs">Wenn Feld</Label>
+          <div className="flex items-center gap-1 mb-2">
+            <Label className="text-xs">Wenn Feld</Label>
+            <QuickTooltip content="Das Feld, dessen Wert überprüft werden soll">
+              <Info className="h-3 w-3 text-gray-400 cursor-help" />
+            </QuickTooltip>
+          </div>
           <Select
             value={condition.source_field}
             onValueChange={(v) => onUpdate({ source_field: v })}
@@ -361,7 +384,12 @@ function ConditionRow({
 
         {/* Operator */}
         <div>
-          <Label className="text-xs">Operator</Label>
+          <div className="flex items-center gap-1 mb-2">
+            <Label className="text-xs">Operator</Label>
+            <QuickTooltip content="Vergleichsoperator: ist gleich, enthält, größer als, etc.">
+              <Info className="h-3 w-3 text-gray-400 cursor-help" />
+            </QuickTooltip>
+          </div>
           <Select
             value={condition.operator}
             onValueChange={(v) => onUpdate({ operator: v })}
@@ -382,7 +410,12 @@ function ConditionRow({
         {/* Value */}
         {needsValue && (
           <div>
-            <Label className="text-xs">Wert</Label>
+            <div className="flex items-center gap-1 mb-2">
+              <Label className="text-xs">Wert</Label>
+              <QuickTooltip content="Der Wert, mit dem verglichen werden soll">
+                <Info className="h-3 w-3 text-gray-400 cursor-help" />
+              </QuickTooltip>
+            </div>
             <Input
               value={String(condition.target_value || "")}
               onChange={(e) => onUpdate({ target_value: e.target.value })}

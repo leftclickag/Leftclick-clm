@@ -2,44 +2,30 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { PermissionsService } from "@/lib/permissions/permissions-service";
 
-// DEV MODE Helper - im Development alle authentifizierten User als Admin behandeln
-const isDev = process.env.NODE_ENV === "development";
-
+// Prüfe ob User Admin-Rechte hat
 async function checkAdminPermission(userId: string): Promise<boolean> {
-  // DEV MODE: Alle authentifizierten Benutzer sind Admins
-  if (isDev) {
-    console.log("✅ DEV MODE: Authentifizierter User wird als Admin behandelt (users router)");
-    return true;
-  }
-
-  // Production: Verwende Admin Client um RLS zu umgehen
   const adminClient = createAdminClient();
-  const { data: userRole } = await adminClient
-    .from("user_roles")
+  const { data } = await adminClient
+    .from("users")
     .select("role")
-    .eq("user_id", userId)
+    .eq("id", userId)
     .single();
 
-  return userRole && ["admin", "super_admin"].includes(userRole.role);
+  return data && ["admin", "super_admin"].includes(data.role);
 }
 
+// Prüfe ob User Super-Admin ist
 async function checkSuperAdminPermission(userId: string): Promise<boolean> {
-  // DEV MODE: Alle authentifizierten Benutzer sind Super Admins
-  if (isDev) {
-    console.log("✅ DEV MODE: Authentifizierter User wird als Super Admin behandelt (users router)");
-    return true;
-  }
-
-  // Production: Verwende Admin Client um RLS zu umgehen
   const adminClient = createAdminClient();
-  const { data: userRole } = await adminClient
-    .from("user_roles")
+  const { data } = await adminClient
+    .from("users")
     .select("role")
-    .eq("user_id", userId)
+    .eq("id", userId)
     .single();
 
-  return userRole?.role === "super_admin";
+  return data?.role === "super_admin";
 }
 
 export const usersRouter = router({
@@ -53,59 +39,64 @@ export const usersRouter = router({
       })
     )
     .query(async ({ ctx, input }) => {
-      const adminClient = createAdminClient();
-
-      // Prüfe Admin-Berechtigung
-      const isAdmin = await checkAdminPermission(ctx.user.id);
-      if (!isAdmin) {
+      // Prüfe Berechtigung
+      const hasPermission = await PermissionsService.hasPermission('users.view');
+      if (!hasPermission) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Keine Berechtigung für diese Aktion",
         });
       }
 
+      const adminClient = createAdminClient();
       const { page, pageSize, search } = input;
       const offset = (page - 1) * pageSize;
 
-      // Hole alle user_roles (mit Admin Client um RLS zu umgehen)
-      const { data: userRolesData, error: rolesError, count } = await adminClient
-        .from("user_roles")
+      // Query für users mit optionaler Suche
+      let query = adminClient
+        .from("users")
         .select("*", { count: "exact" })
-        .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false });
+
+      if (search) {
+        query = query.or(`email.ilike.%${search}%`);
+      }
+
+      const { data: usersData, error: usersError, count } = await query
         .range(offset, offset + pageSize - 1);
 
-      if (rolesError) {
+      if (usersError) {
+        console.error("❌ Fehler beim Laden der Benutzer:", usersError);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Fehler beim Laden der Benutzer",
+          message: `Fehler beim Laden der Benutzer: ${usersError.message}`,
         });
       }
 
-      // Hole die User-Details aus auth.users über admin API
+      // Hole Auth-User Details für jeden Benutzer
       const users = [];
-      if (userRolesData) {
-        for (const userRole of userRolesData) {
+      if (usersData) {
+        for (const user of usersData) {
           try {
             const { data: authUser, error: authError } = await adminClient.auth.admin.getUserById(
-              userRole.user_id
+              user.id
             );
-            
+
             if (authError) {
-               console.error(`Fehler beim Laden von User ${userRole.user_id}:`, authError);
-               continue;
+              console.error(`Fehler beim Laden von User ${user.id}:`, authError);
+              continue;
             }
 
             if (authUser.user) {
               users.push({
                 ...authUser.user,
                 user_roles: {
-                  role: userRole.role,
-                  permissions: userRole.permissions,
+                  role: user.role,
                 },
               });
             }
           } catch (e) {
-             console.error(`Exception beim Laden von User ${userRole.user_id}:`, e);
+            console.error(`Exception beim Laden von User ${user.id}:`, e);
           }
         }
       }
@@ -117,7 +108,6 @@ export const usersRouter = router({
         pageSize,
         totalPages: Math.ceil((count || 0) / pageSize),
       };
-
     }),
 
   // Einzelner Benutzer
@@ -137,11 +127,11 @@ export const usersRouter = router({
         });
       }
 
-      // Hole User-Rolle
-      const { data: userRoleData } = await adminClient
-        .from("user_roles")
+      // Hole User
+      const { data: userData } = await adminClient
+        .from("users")
         .select("*")
-        .eq("user_id", input.userId)
+        .eq("id", input.userId)
         .single();
 
       // Hole Auth User Details
@@ -156,28 +146,11 @@ export const usersRouter = router({
         });
       }
 
-      // Hole Invite Code Usage
-      const { data: inviteUsage } = await adminClient
-        .from("invite_code_usage")
-        .select(
-          `
-          invite_code_id,
-          used_at,
-          invite_codes (code)
-        `
-        )
-        .eq("used_by", input.userId)
-        .single();
-
       return {
         ...authUser.user,
-        user_roles: userRoleData
-          ? {
-              role: userRoleData.role,
-              permissions: userRoleData.permissions,
-            }
-          : { role: "user", permissions: [] },
-        invite_code_usage: inviteUsage ? [inviteUsage] : [],
+        user_roles: userData
+          ? { role: userData.role }
+          : { role: "user" },
       };
     }),
 
@@ -192,65 +165,68 @@ export const usersRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const adminClient = createAdminClient();
-
-      // Prüfe Berechtigung (nur Admin/Super Admin darf erstellen)
-      const isAdmin = await checkAdminPermission(ctx.user.id);
-      if (!isAdmin) {
+      // Prüfe Berechtigung
+      const hasPermission = await PermissionsService.hasPermission('users.create');
+      if (!hasPermission) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Keine Berechtigung Benutzer zu erstellen",
         });
       }
 
+      const adminClient = createAdminClient();
       console.log("📝 Creating user:", input.email);
+
+      // Hole Tenant des aktuellen Users
+      const { data: currentUserData } = await adminClient
+        .from("users")
+        .select("tenant_id")
+        .eq("id", ctx.user.id)
+        .single();
+
+      const tenantId = currentUserData?.tenant_id || '00000000-0000-0000-0000-000000000001';
 
       // 1. Benutzer in Auth erstellen
       const { data: authUser, error: createError } = await adminClient.auth.admin.createUser({
         email: input.email,
         password: input.password,
-        email_confirm: true, // Email direkt bestätigen
+        email_confirm: true,
         user_metadata: {
           name: input.name,
         },
       });
 
-      if (createError) {
+      if (createError || !authUser.user) {
         console.error("❌ Auth createUser error:", createError);
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: `Fehler beim Erstellen: ${createError.message}`,
-        });
-      }
-
-      if (!authUser.user) {
-        console.error("❌ Auth user is null after creation");
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Benutzer konnte nicht erstellt werden",
+          message: `Fehler beim Erstellen: ${createError?.message}`,
         });
       }
 
       console.log("✅ Auth user created:", authUser.user.id);
 
-      // 2. Rolle zuweisen
-      const { error: roleError } = await adminClient
-        .from("user_roles")
-        .insert({
-          user_id: authUser.user.id,
+      // 2. Eintrag in users Tabelle erstellen/aktualisieren
+      const { error: userError } = await adminClient
+        .from("users")
+        .upsert({
+          id: authUser.user.id,
+          email: input.email,
           role: input.role,
-          permissions: [],
+          tenant_id: tenantId,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'id'
         });
 
-      if (roleError) {
-        console.error("❌ Role assignment error:", roleError);
-        // Cleanup: User wieder löschen wenn Rolle nicht gesetzt werden konnte
+      if (userError) {
+        console.error("❌ User table error:", userError);
+        // Cleanup: User wieder löschen
         await adminClient.auth.admin.deleteUser(authUser.user.id);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Fehler beim Zuweisen der Rolle: ${roleError.message}`,
+          message: `Fehler beim Zuweisen der Rolle: ${userError.message}`,
         });
       }
 
@@ -258,44 +234,98 @@ export const usersRouter = router({
       return { success: true, user: authUser.user };
     }),
 
-  // Benutzer-Rolle aktualisieren
-  updateRole: protectedProcedure
+  // Benutzer aktualisieren
+  update: protectedProcedure
     .input(
       z.object({
         userId: z.string().uuid(),
-        role: z.enum(["user", "admin", "super_admin"]),
-        permissions: z.array(z.string()).optional(),
+        name: z.string().optional(),
+        password: z.string().min(6).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const adminClient = createAdminClient();
 
-      // Nur Super-Admins können Rollen ändern
-      const isSuperAdmin = await checkSuperAdminPermission(ctx.user.id);
-      if (!isSuperAdmin) {
+      // Prüfe Berechtigung
+      const isAdmin = await checkAdminPermission(ctx.user.id);
+      const isSelf = ctx.user.id === input.userId;
+
+      if (!isAdmin && !isSelf) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: "Nur Super-Admins können Rollen ändern",
+          message: "Keine Berechtigung Benutzer zu bearbeiten",
         });
       }
 
-      // Verhindere, dass sich ein Admin selbst degradiert
-      if (ctx.user.id === input.userId && input.role !== "super_admin") {
+      if (!input.name && !input.password) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Du kannst deine eigene Rolle nicht ändern",
+          message: "Mindestens ein Feld muss angegeben werden",
         });
       }
 
-      // Verwende Admin Client für das Update um sicherzustellen, dass es funktioniert
-      const { error } = await adminClient
-        .from("user_roles")
-        .upsert({
-          user_id: input.userId,
-          role: input.role,
-          permissions: input.permissions || [],
-          updated_at: new Date().toISOString(),
+      const updateData: any = {};
+
+      if (input.name) {
+        updateData.user_metadata = { name: input.name };
+      }
+
+      if (input.password) {
+        updateData.password = input.password;
+      }
+
+      const { data: updatedUser, error: updateError } = await adminClient.auth.admin.updateUserById(
+        input.userId,
+        updateData
+      );
+
+      if (updateError) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Fehler beim Aktualisieren: ${updateError.message}`,
         });
+      }
+
+      return { success: true, user: updatedUser.user };
+    }),
+
+  // Rolle aktualisieren
+  updateRole: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string().uuid(),
+        role: z.enum(["user", "admin", "super_admin"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Prüfe Berechtigung
+      const hasPermission = await PermissionsService.hasPermission('users.manage_roles');
+      if (!hasPermission) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Keine Berechtigung Rollen zu ändern",
+        });
+      }
+
+      // Verhindere Selbst-Degradierung
+      if (ctx.user.id === input.userId) {
+        const currentRole = await PermissionsService.getCurrentUserRole();
+        if (currentRole === 'super_admin' && input.role !== 'super_admin') {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Du kannst deine eigene Rolle nicht herabstufen",
+          });
+        }
+      }
+
+      const adminClient = createAdminClient();
+      const { error } = await adminClient
+        .from("users")
+        .update({
+          role: input.role,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", input.userId);
 
       if (error) {
         throw new TRPCError({
@@ -307,18 +337,16 @@ export const usersRouter = router({
       return { success: true };
     }),
 
-  // Benutzer deaktivieren/löschen
+  // Benutzer löschen
   delete: protectedProcedure
     .input(z.object({ userId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const adminClient = createAdminClient();
-
-      // Nur Super-Admins können Benutzer löschen
-      const isSuperAdmin = await checkSuperAdminPermission(ctx.user.id);
-      if (!isSuperAdmin) {
+      // Prüfe Berechtigung
+      const hasPermission = await PermissionsService.hasPermission('users.delete');
+      if (!hasPermission) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: "Nur Super-Admins können Benutzer löschen",
+          message: "Keine Berechtigung Benutzer zu löschen",
         });
       }
 
@@ -330,7 +358,7 @@ export const usersRouter = router({
         });
       }
 
-      // Lösche Benutzer aus auth.users mit Admin Client
+      const adminClient = createAdminClient();
       const { error } = await adminClient.auth.admin.deleteUser(input.userId);
 
       if (error) {
@@ -339,30 +367,27 @@ export const usersRouter = router({
           message: "Fehler beim Löschen des Benutzers",
         });
       }
-      
-      // user_roles wird durch foreign key cascade gelöscht, falls eingerichtet.
-      // Wenn nicht, manuell löschen:
-      await adminClient.from("user_roles").delete().eq("user_id", input.userId);
+
+      // users Eintrag wird durch CASCADE gelöscht
 
       return { success: true };
     }),
 
-  // Aktuelle Benutzer-Statistiken
+  // Statistiken
   stats: protectedProcedure.query(async ({ ctx }) => {
-    const adminClient = createAdminClient();
-
-    // Prüfe Admin-Berechtigung
-    const isAdmin = await checkAdminPermission(ctx.user.id);
-    if (!isAdmin) {
+    const hasPermission = await PermissionsService.hasPermission('users.view');
+    if (!hasPermission) {
       throw new TRPCError({
         code: "FORBIDDEN",
-        message: "Keine Berechtigung für diese Aktion",
+        message: "Keine Berechtigung",
       });
     }
 
-    // Gesamtanzahl Benutzer aus user_roles
+    const adminClient = createAdminClient();
+
+    // Gesamtanzahl
     const { count: totalUsers } = await adminClient
-      .from("user_roles")
+      .from("users")
       .select("*", { count: "exact", head: true });
 
     // Neue Benutzer letzte 30 Tage
@@ -370,13 +395,13 @@ export const usersRouter = router({
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const { count: newUsers } = await adminClient
-      .from("user_roles")
+      .from("users")
       .select("*", { count: "exact", head: true })
       .gte("created_at", thirtyDaysAgo.toISOString());
 
     // Benutzer nach Rolle
     const { data: roleStats } = await adminClient
-      .from("user_roles")
+      .from("users")
       .select("role");
 
     const usersByRole = roleStats?.reduce((acc: Record<string, number>, curr) => {

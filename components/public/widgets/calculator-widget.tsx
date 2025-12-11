@@ -293,6 +293,13 @@ export function CalculatorWidget({ leadMagnet }: CalculatorWidgetProps) {
         results: outputs,
         formData,
       });
+
+      // Trigger API-Push an externe Systeme
+      const submissionId = tracker.getSubmissionId();
+      if (submissionId) {
+        const { triggerLeadPush } = await import("@/lib/api-integration/trigger-push");
+        triggerLeadPush(submissionId, "lead.completed");
+      }
     } catch (error) {
       console.error("Berechnungsfehler:", error);
       console.error("FormData:", formData);

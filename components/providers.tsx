@@ -6,6 +6,7 @@ import { useState } from "react";
 import { httpBatchLink } from "@trpc/client";
 import { trpc } from "@/lib/trpc/client";
 import { getBaseUrl } from "@/lib/utils/url";
+import { ToastProvider } from "@/components/ui/toast";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -23,7 +24,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          {children}
+          <ToastProvider>{children}</ToastProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </trpc.Provider>

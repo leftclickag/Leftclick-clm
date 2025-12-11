@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, GlowCard } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { QuickTooltip } from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
@@ -193,25 +194,26 @@ export default function LeadsPage() {
         {statsData.map((stat, index) => {
           const colors = colorClasses[stat.color as keyof typeof colorClasses];
           return (
-            <Card
-              key={stat.title}
-              className="relative overflow-hidden hover-lift animate-fade-in"
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <div className={`absolute inset-0 bg-gradient-to-br ${colors.bg} opacity-50`} />
-              <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.title}
-                </CardTitle>
-                <div className={`p-2.5 rounded-xl ${colors.iconBg}`}>
-                  <stat.icon className={`h-5 w-5 ${colors.icon}`} />
-                </div>
-              </CardHeader>
-              <CardContent className="relative">
-                <div className="text-4xl font-bold tracking-tight mb-1 text-foreground">{stat.value}</div>
-                <p className="text-xs text-muted-foreground">{stat.description}</p>
-              </CardContent>
-            </Card>
+            <QuickTooltip key={stat.title} content={stat.description}>
+              <Card
+                className="relative overflow-hidden hover-lift animate-fade-in"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${colors.bg} opacity-50`} />
+                <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {stat.title}
+                  </CardTitle>
+                  <div className={`p-2.5 rounded-xl ${colors.iconBg}`}>
+                    <stat.icon className={`h-5 w-5 ${colors.icon}`} />
+                  </div>
+                </CardHeader>
+                <CardContent className="relative">
+                  <div className="text-4xl font-bold tracking-tight mb-1 text-foreground">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground">{stat.description}</p>
+                </CardContent>
+              </Card>
+            </QuickTooltip>
           );
         })}
       </div>
@@ -251,55 +253,61 @@ export default function LeadsPage() {
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Suche nach E-Mail oder Name..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
+              <QuickTooltip content="Durchsuchen Sie Leads nach E-Mail-Adresse oder Name">
+                <Input
+                  placeholder="Suche nach E-Mail oder Name..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
+                  className="pl-10"
+                />
+              </QuickTooltip>
+            </div>
+            <QuickTooltip content="Filtern Sie Leads nach ihrem Status: Abgeschlossen, In Bearbeitung, Gestartet oder Abgebrochen">
+              <Select
+                value={status}
+                onValueChange={(value: any) => {
+                  setStatus(value);
                   setPage(1);
                 }}
-                className="pl-10"
-              />
-            </div>
-            <Select
-              value={status}
-              onValueChange={(value: any) => {
-                setStatus(value);
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-full md:w-48">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Status filtern" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Status</SelectItem>
-                <SelectItem value="completed">Abgeschlossen</SelectItem>
-                <SelectItem value="in_progress">In Bearbeitung</SelectItem>
-                <SelectItem value="started">Gestartet</SelectItem>
-                <SelectItem value="abandoned">Abgebrochen</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={selectedLeadMagnet || "all"}
-              onValueChange={(value) => {
-                setSelectedLeadMagnet(value === "all" ? undefined : value);
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-full md:w-64">
-                <FileText className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Lead-Magnet filtern" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Lead-Magnete</SelectItem>
-                {leadMagnets?.map((lm: any) => (
-                  <SelectItem key={lm.id} value={lm.id}>
-                    {lm.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              >
+                <SelectTrigger className="w-full md:w-48">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Status filtern" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle Status</SelectItem>
+                  <SelectItem value="completed">Abgeschlossen</SelectItem>
+                  <SelectItem value="in_progress">In Bearbeitung</SelectItem>
+                  <SelectItem value="started">Gestartet</SelectItem>
+                  <SelectItem value="abandoned">Abgebrochen</SelectItem>
+                </SelectContent>
+              </Select>
+            </QuickTooltip>
+            <QuickTooltip content="Filtern Sie Leads nach dem verwendeten Lead-Magnet">
+              <Select
+                value={selectedLeadMagnet || "all"}
+                onValueChange={(value) => {
+                  setSelectedLeadMagnet(value === "all" ? undefined : value);
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger className="w-full md:w-64">
+                  <FileText className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Lead-Magnet filtern" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle Lead-Magnete</SelectItem>
+                  {leadMagnets?.map((lm: any) => (
+                    <SelectItem key={lm.id} value={lm.id}>
+                      {lm.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </QuickTooltip>
           </div>
         </CardContent>
       </Card>
@@ -458,15 +466,17 @@ export default function LeadsPage() {
                         {/* Aktionen */}
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500"
-                              onClick={() => handleDelete(lead.id)}
-                              disabled={deleteLead.isPending}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <QuickTooltip content="Lead dauerhaft löschen">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500"
+                                onClick={() => handleDelete(lead.id)}
+                                disabled={deleteLead.isPending}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </QuickTooltip>
                           </div>
                         </td>
                       </tr>
@@ -482,22 +492,26 @@ export default function LeadsPage() {
                     Seite {page} von {leadsData.totalPages} ({leadsData.total} Leads)
                   </div>
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage(page - 1)}
-                      disabled={page === 1}
-                    >
-                      Zurück
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage(page + 1)}
-                      disabled={page === leadsData.totalPages}
-                    >
-                      Weiter
-                    </Button>
+                    <QuickTooltip content="Zur vorherigen Seite">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(page - 1)}
+                        disabled={page === 1}
+                      >
+                        Zurück
+                      </Button>
+                    </QuickTooltip>
+                    <QuickTooltip content="Zur nächsten Seite">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(page + 1)}
+                        disabled={page === leadsData.totalPages}
+                      >
+                        Weiter
+                      </Button>
+                    </QuickTooltip>
                   </div>
                 </div>
               )}

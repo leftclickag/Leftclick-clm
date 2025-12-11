@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, Code, Monitor, Smartphone, ExternalLink, Settings } from "lucide-react";
+import { Copy, Check, Code, Monitor, Smartphone, ExternalLink, Settings, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { QuickTooltip } from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
@@ -163,13 +164,20 @@ export function EmbedCodeGenerator({
       {/* Embed Type Selection */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Code className="h-5 w-5" />
-            Embed-Typ auswählen
-          </CardTitle>
-          <CardDescription>
-            Wähle aus wie das Widget auf deiner Website erscheinen soll
-          </CardDescription>
+          <div className="flex items-center gap-2">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Code className="h-5 w-5" />
+                Embed-Typ auswählen
+              </CardTitle>
+              <CardDescription>
+                Wähle aus wie das Widget auf deiner Website erscheinen soll
+              </CardDescription>
+            </div>
+            <QuickTooltip content="Wählen Sie, wie das Lead-Magnet-Widget auf Ihrer Website integriert werden soll: iFrame (einfach), Popup (Overlay), Slide-In oder Inline (direkt im Content)">
+              <Info className="h-4 w-4 text-gray-400 cursor-help" />
+            </QuickTooltip>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -224,7 +232,12 @@ export function EmbedCodeGenerator({
           {(config.type === "iframe" || config.type === "popup") && (
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Breite</Label>
+                <div className="flex items-center gap-1 mb-2">
+                  <Label>Breite</Label>
+                  <QuickTooltip content="Kann als Prozent (z.B. 100%) oder Pixel (z.B. 600px) angegeben werden">
+                    <Info className="h-3 w-3 text-gray-400 cursor-help" />
+                  </QuickTooltip>
+                </div>
                 <Input
                   value={config.width}
                   onChange={(e) =>
@@ -234,7 +247,12 @@ export function EmbedCodeGenerator({
                 />
               </div>
               <div>
-                <Label>Höhe (px)</Label>
+                <div className="flex items-center gap-1 mb-2">
+                  <Label>Höhe (px)</Label>
+                  <QuickTooltip content="Höhe des Widgets in Pixel. Empfohlen: 600px für Desktop">
+                    <Info className="h-3 w-3 text-gray-400 cursor-help" />
+                  </QuickTooltip>
+                </div>
                 <Input
                   value={config.height}
                   onChange={(e) =>
@@ -249,7 +267,12 @@ export function EmbedCodeGenerator({
           {/* Position (for popup and slide_in) */}
           {(config.type === "popup" || config.type === "slide_in") && (
             <div>
-              <Label>Position</Label>
+              <div className="flex items-center gap-1 mb-2">
+                <Label>Position</Label>
+                <QuickTooltip content="Bestimmt, wo das Widget auf dem Bildschirm erscheint">
+                  <Info className="h-3 w-3 text-gray-400 cursor-help" />
+                </QuickTooltip>
+              </div>
               <Select
                 value={config.position}
                 onValueChange={(v) =>
@@ -275,7 +298,12 @@ export function EmbedCodeGenerator({
           {(config.type === "popup" || config.type === "slide_in") && (
             <div className="space-y-4">
               <div>
-                <Label>Trigger</Label>
+                <div className="flex items-center gap-1 mb-2">
+                  <Label>Trigger</Label>
+                  <QuickTooltip content="Bestimmt, wann das Widget erscheint: sofort bei Klick, nach bestimmter Zeit, bei bestimmter Scroll-Position oder wenn der Benutzer die Seite verlassen möchte">
+                    <Info className="h-3 w-3 text-gray-400 cursor-help" />
+                  </QuickTooltip>
+                </div>
                 <Select
                   value={config.trigger}
                   onValueChange={(v) =>

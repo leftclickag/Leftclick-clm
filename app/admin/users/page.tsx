@@ -13,12 +13,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc/client";
-import { Users, UserPlus, Shield, Crown, User, Trash2, Search } from "lucide-react";
+import { Users, UserPlus, Shield, Crown, User, Trash2, Search, Edit } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useToast } from "@/components/ui/toast";
 
 export default function UsersPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    password: "",
+  });
   const [newUser, setNewUser] = useState({
     email: "",
     password: "",
@@ -26,6 +34,20 @@ export default function UsersPage() {
     role: "user" as "user" | "admin" | "super_admin",
   });
 
+  // Confirm Dialogs
+  const [roleChangeConfirm, setRoleChangeConfirm] = useState<{
+    open: boolean;
+    userId: string;
+    newRole: string;
+  }>({ open: false, userId: "", newRole: "" });
+
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    open: boolean;
+    userId: string;
+    email: string;
+  }>({ open: false, userId: "", email: "" });
+
+  const toast = useToast();
   const utils = trpc.useUtils();
 
   // Lade Benutzer
@@ -62,28 +84,79 @@ export default function UsersPage() {
     },
   });
 
+  const updateUser = trpc.users.update.useMutation({
+    onSuccess: () => {
+      utils.users.list.invalidate();
+      setShowEditModal(false);
+      setEditingUser(null);
+      setEditForm({ name: "", password: "" });
+    },
+  });
+
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
     createUser.mutate(newUser);
   };
 
   const handleRoleChange = (userId: string, newRole: string) => {
-    if (confirm(`Rolle wirklich zu "${newRole}" ändern?`)) {
-      updateRole.mutate({
-        userId,
-        role: newRole as "user" | "admin" | "super_admin",
-      });
-    }
+    setRoleChangeConfirm({ open: true, userId, newRole });
+  };
+
+  const confirmRoleChange = () => {
+    updateRole.mutate(
+      {
+        userId: roleChangeConfirm.userId,
+        role: roleChangeConfirm.newRole as "user" | "admin" | "super_admin",
+      },
+      {
+        onSuccess: () => {
+          toast.success(`Rolle erfolgreich zu "${roleChangeConfirm.newRole}" geändert`);
+          setRoleChangeConfirm({ open: false, userId: "", newRole: "" });
+        },
+        onError: (error) => {
+          toast.error(`Fehler beim Ändern der Rolle: ${error.message}`);
+        },
+      }
+    );
   };
 
   const handleDeleteUser = (userId: string, email: string) => {
-    if (
-      confirm(
-        `Benutzer "${email}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`
-      )
-    ) {
-      deleteUser.mutate({ userId });
-    }
+    setDeleteConfirm({ open: true, userId, email });
+  };
+
+  const confirmDeleteUser = () => {
+    deleteUser.mutate(
+      { userId: deleteConfirm.userId },
+      {
+        onSuccess: () => {
+          toast.success(`Benutzer "${deleteConfirm.email}" erfolgreich gelöscht`);
+          setDeleteConfirm({ open: false, userId: "", email: "" });
+        },
+        onError: (error) => {
+          toast.error(`Fehler beim Löschen: ${error.message}`);
+        },
+      }
+    );
+  };
+
+  const handleEditUser = (user: any) => {
+    setEditingUser(user);
+    setEditForm({
+      name: user.user_metadata?.name || "",
+      password: "",
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+
+    updateUser.mutate({
+      userId: editingUser.id,
+      name: editForm.name || undefined,
+      password: editForm.password || undefined,
+    });
   };
 
   const getRoleBadge = (role: string) => {
@@ -111,6 +184,35 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-8">
+      {/* Confirm Dialogs */}
+      <ConfirmDialog
+        open={roleChangeConfirm.open}
+        onOpenChange={(open) =>
+          !open && setRoleChangeConfirm({ open: false, userId: "", newRole: "" })
+        }
+        title="Rolle ändern?"
+        description={`Möchtest du die Rolle wirklich zu "${roleChangeConfirm.newRole}" ändern?`}
+        confirmLabel="Rolle ändern"
+        cancelLabel="Abbrechen"
+        variant="warning"
+        onConfirm={confirmRoleChange}
+        loading={updateRole.isPending}
+      />
+
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        onOpenChange={(open) =>
+          !open && setDeleteConfirm({ open: false, userId: "", email: "" })
+        }
+        title="Benutzer löschen?"
+        description={`Möchtest du den Benutzer "${deleteConfirm.email}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`}
+        confirmLabel="Löschen"
+        cancelLabel="Abbrechen"
+        variant="danger"
+        onConfirm={confirmDeleteUser}
+        loading={deleteUser.isPending}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between animate-fade-in">
         <div>
@@ -132,6 +234,131 @@ export default function UsersPage() {
           Neuer Benutzer
         </Button>
       </div>
+
+      {/* Edit User Modal */}
+      {showEditModal && editingUser && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <Card className="w-full max-w-md border-border">
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-xl">Benutzer bearbeiten</CardTitle>
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingUser(null);
+                    setEditForm({ name: "", password: "" });
+                  }}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Bearbeite Benutzerdaten für {editingUser.email}
+              </p>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleUpdateUser} className="space-y-4">
+                <div>
+                  <Label htmlFor="edit-name">Anzeigename</Label>
+                  <Input
+                    id="edit-name"
+                    type="text"
+                    placeholder="Max Mustermann"
+                    value={editForm.name}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Leer lassen, um unverändert zu lassen
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-password">Neues Passwort</Label>
+                  <Input
+                    id="edit-password"
+                    type="password"
+                    placeholder="Mindestens 6 Zeichen"
+                    value={editForm.password}
+                    onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Leer lassen, um Passwort nicht zu ändern
+                  </p>
+                </div>
+
+                <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <div className="text-blue-400 mt-0.5">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </div>
+                    <div className="text-xs text-blue-400">
+                      <strong>Hinweis:</strong> Nur ausgefüllte Felder werden aktualisiert.
+                      E-Mail und Rolle können hier nicht geändert werden.
+                    </div>
+                  </div>
+                </div>
+
+                {updateUser.error && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+                    {updateUser.error.message}
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditingUser(null);
+                      setEditForm({ name: "", password: "" });
+                    }}
+                    className="flex-1"
+                  >
+                    Abbrechen
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-cyan-500 hover:from-purple-700 hover:to-cyan-600"
+                    disabled={updateUser.isPending}
+                  >
+                    {updateUser.isPending ? "Speichere..." : "Speichern"}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Create User Modal */}
       {showCreateModal && (
@@ -444,10 +671,19 @@ export default function UsersPage() {
                               </SelectContent>
                             </Select>
                             <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditUser(user)}
+                              title="Benutzer bearbeiten"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
                               variant="destructive"
                               size="sm"
                               onClick={() => handleDeleteUser(user.id, user.email)}
                               disabled={deleteUser.isPending}
+                              title="Benutzer löschen"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

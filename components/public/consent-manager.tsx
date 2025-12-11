@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Shield, Check, X, ChevronDown, ChevronUp, Cookie } from "lucide-react";
+import { Shield, Check, X, ChevronDown, ChevronUp, Cookie, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { QuickTooltip } from "@/components/ui/tooltip";
 
 interface ConsentCategory {
   id: string;
@@ -192,33 +193,39 @@ export function ConsentManager({
               </div>
 
               <div className="flex flex-wrap gap-2 lg:flex-nowrap">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowDetails(!showDetails)}
-                  className="flex-1 lg:flex-none"
-                >
-                  {showDetails ? (
-                    <ChevronUp className="h-4 w-4 mr-1" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 mr-1" />
-                  )}
-                  Einstellungen
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleRejectAll}
-                  className="flex-1 lg:flex-none"
-                >
-                  Nur Notwendige
-                </Button>
-                <Button
-                  onClick={handleAcceptAll}
-                  style={{ backgroundColor: brandColor }}
-                  className="flex-1 lg:flex-none text-white hover:opacity-90"
-                >
-                  <Check className="h-4 w-4 mr-1" />
-                  Alle akzeptieren
-                </Button>
+                <QuickTooltip content="Cookie-Einstellungen im Detail anzeigen und anpassen">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDetails(!showDetails)}
+                    className="flex-1 lg:flex-none"
+                  >
+                    {showDetails ? (
+                      <ChevronUp className="h-4 w-4 mr-1" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 mr-1" />
+                    )}
+                    Einstellungen
+                  </Button>
+                </QuickTooltip>
+                <QuickTooltip content="Nur notwendige Cookies akzeptieren, alle anderen ablehnen">
+                  <Button
+                    variant="outline"
+                    onClick={handleRejectAll}
+                    className="flex-1 lg:flex-none"
+                  >
+                    Nur Notwendige
+                  </Button>
+                </QuickTooltip>
+                <QuickTooltip content="Alle Cookies akzeptieren: notwendige, Analyse- und Marketing-Cookies">
+                  <Button
+                    onClick={handleAcceptAll}
+                    style={{ backgroundColor: brandColor }}
+                    className="flex-1 lg:flex-none text-white hover:opacity-90"
+                  >
+                    <Check className="h-4 w-4 mr-1" />
+                    Alle akzeptieren
+                  </Button>
+                </QuickTooltip>
               </div>
             </div>
           </div>

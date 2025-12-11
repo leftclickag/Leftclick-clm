@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { GripVertical, Plus, Trash2, FormInput, CheckSquare, List, SlidersHorizontal, Trophy } from "lucide-react";
+import { QuickTooltip } from "@/components/ui/tooltip";
+import { GripVertical, Plus, Trash2, FormInput, CheckSquare, List, SlidersHorizontal, Trophy, Info } from "lucide-react";
 
 interface FlowStep {
   id: string;
@@ -78,14 +79,21 @@ export function LeadMagnetBuilder({ initialSteps = [], onSave }: LeadMagnetBuild
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-white">Wizard-Schritte</h3>
-          <p className="text-sm text-muted-foreground">Drag & Drop zum Sortieren</p>
+        <div className="flex items-center gap-2">
+          <div>
+            <h3 className="text-lg font-semibold text-white">Wizard-Schritte</h3>
+            <p className="text-sm text-muted-foreground">Drag & Drop zum Sortieren</p>
+          </div>
+          <QuickTooltip content="Erstellen Sie einen mehrstufigen Wizard-Flow für Ihre Lead-Magneten. Jeder Schritt kann verschiedene Eingabetypen enthalten.">
+            <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+          </QuickTooltip>
         </div>
-        <Button onClick={addStep} size="sm" variant="outline">
-          <Plus className="mr-2 h-4 w-4" />
-          Schritt hinzufügen
-        </Button>
+        <QuickTooltip content="Fügen Sie einen neuen Schritt zu Ihrem Wizard hinzu">
+          <Button onClick={addStep} size="sm" variant="outline">
+            <Plus className="mr-2 h-4 w-4" />
+            Schritt hinzufügen
+          </Button>
+        </QuickTooltip>
       </div>
 
       {steps.length === 0 && (
@@ -107,7 +115,7 @@ export function LeadMagnetBuilder({ initialSteps = [], onSave }: LeadMagnetBuild
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={steps.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-4">
+          <div className="space-y-4 pl-8">
             {steps.map((step, index) => (
               <SortableStep
                 key={step.id}
@@ -169,18 +177,20 @@ function SortableStep({
       }`}
     >
       {/* Step number indicator */}
-      <div className="absolute -left-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 text-white text-xs font-bold">
+      <div className="absolute -left-14 top-1/2 -translate-y-1/2 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 text-white text-lg font-bold shadow-lg shadow-purple-500/50 ring-2 ring-white/20">
         {step.step_number}
       </div>
 
       {/* Drag handle */}
-      <div 
-        className="absolute left-3 top-5 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-white/10 transition-colors" 
-        {...attributes} 
-        {...listeners}
-      >
-        <GripVertical className="h-5 w-5 text-muted-foreground" />
-      </div>
+      <QuickTooltip content="Ziehen Sie den Schritt, um die Reihenfolge zu ändern">
+        <div 
+          className="absolute left-3 top-5 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-white/10 transition-colors" 
+          {...attributes} 
+          {...listeners}
+        >
+          <GripVertical className="h-5 w-5 text-muted-foreground" />
+        </div>
+      </QuickTooltip>
 
       <CardHeader className="pl-12 pb-3">
         <div className="flex items-center justify-between">
@@ -188,21 +198,28 @@ function SortableStep({
             {selectedType && <selectedType.icon className="h-4 w-4 text-purple-400" />}
             <span>Schritt {step.step_number}</span>
           </CardTitle>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={onRemove}
-            className="h-8 w-8 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <QuickTooltip content="Schritt löschen">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={onRemove}
+              className="h-8 w-8 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </QuickTooltip>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-4 pl-12">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Titel</Label>
+            <div className="flex items-center gap-1">
+              <Label className="text-xs text-muted-foreground">Titel</Label>
+              <QuickTooltip content="Der Titel wird dem Benutzer im Wizard angezeigt">
+                <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+              </QuickTooltip>
+            </div>
             <Input
               value={step.title}
               onChange={(e) => onUpdate({ title: e.target.value })}
@@ -210,7 +227,12 @@ function SortableStep({
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Komponenten-Typ</Label>
+            <div className="flex items-center gap-1">
+              <Label className="text-xs text-muted-foreground">Komponenten-Typ</Label>
+              <QuickTooltip content="Wählen Sie den Eingabetyp für diesen Schritt: Formular, Checkboxen, Multi-Select, Schieberegler oder Ergebnis">
+                <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+              </QuickTooltip>
+            </div>
             <select
               className="flex h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition-all focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 hover:border-white/20"
               value={step.component_type}
@@ -225,7 +247,12 @@ function SortableStep({
           </div>
         </div>
         <div className="space-y-2">
-          <Label className="text-xs text-muted-foreground">Beschreibung (optional)</Label>
+          <div className="flex items-center gap-1">
+            <Label className="text-xs text-muted-foreground">Beschreibung (optional)</Label>
+            <QuickTooltip content="Optionaler Hilfetext, der unterhalb des Schritt-Titels angezeigt wird">
+              <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+            </QuickTooltip>
+          </div>
           <Input
             value={step.description || ""}
             onChange={(e) => onUpdate({ description: e.target.value })}

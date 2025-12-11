@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, GlowCard } from "@/components/ui/card";
+import { QuickTooltip } from "@/components/ui/tooltip";
 import { 
   Magnet, 
   Send, 
@@ -119,12 +120,19 @@ export default async function AdminDashboard() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => {
           const colors = colorClasses[stat.color as keyof typeof colorClasses];
+          const tooltipContent = stat.title === "Aktive Lead-Magnete" 
+            ? "Anzahl der derzeit veröffentlichten und aktiven Lead-Magnete"
+            : stat.title === "Gesamt Submissions"
+            ? "Gesamtanzahl aller eingegangenen Lead-Submissions"
+            : stat.title === "Conversion Rate"
+            ? "Prozentsatz der Besucher, die einen Lead-Magnet abgeschlossen haben"
+            : "Anzahl der abgebrochenen Submissions in den letzten 7 Tagen";
           return (
-            <Card 
-              key={stat.title} 
-              className={`relative overflow-hidden hover-lift animate-fade-in`}
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
+            <QuickTooltip key={stat.title} content={tooltipContent}>
+              <Card 
+                className={`relative overflow-hidden hover-lift animate-fade-in`}
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
               {/* Background Gradient */}
               <div className={`absolute inset-0 bg-gradient-to-br ${colors.bg} opacity-50`} />
               
@@ -151,7 +159,8 @@ export default async function AdminDashboard() {
                   </div>
                 </div>
               </CardContent>
-            </Card>
+              </Card>
+            </QuickTooltip>
           );
         })}
       </div>

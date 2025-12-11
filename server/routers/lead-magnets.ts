@@ -44,10 +44,17 @@ export const leadMagnetsRouter = router({
         .eq("id", user.user?.id)
         .single();
 
+      // Extract steps from config if present
+      const { config, ...inputWithoutConfig } = input;
+      const steps = config?.steps;
+      const configWithoutSteps = config ? { ...config } : {};
+      delete configWithoutSteps.steps;
+
       const { data, error } = await ctx.supabase
         .from("lead_magnets")
         .insert({
-          ...input,
+          ...inputWithoutConfig,
+          config: configWithoutSteps,
           tenant_id: userProfile?.tenant_id,
           created_by: user.user?.id,
         })
@@ -55,6 +62,25 @@ export const leadMagnetsRouter = router({
         .single();
 
       if (error) throw new Error(error.message);
+
+      // If steps were provided, insert them into flow_steps table
+      if (steps && Array.isArray(steps) && steps.length > 0) {
+        const flowStepsToInsert = steps.map((step: any) => ({
+          lead_magnet_id: data.id,
+          step_number: step.step_number,
+          title: step.title,
+          description: step.description || null,
+          component_type: step.component_type,
+          config: step.config || {},
+        }));
+
+        const { error: stepsError } = await ctx.supabase
+          .from("flow_steps")
+          .insert(flowStepsToInsert);
+
+        if (stepsError) throw new Error(stepsError.message);
+      }
+
       return data;
     }),
 
@@ -66,15 +92,53 @@ export const leadMagnetsRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, ...updateData } = input;
+      const { id, config, ...updateData } = input;
+      
+      // Extract steps from config if present
+      const steps = config?.steps;
+      const configWithoutSteps = config ? { ...config } : {};
+      delete configWithoutSteps.steps;
+      
+      // Update the lead magnet without steps in config
       const { data, error } = await ctx.supabase
         .from("lead_magnets")
-        .update(updateData)
+        .update({
+          ...updateData,
+          config: configWithoutSteps,
+        })
         .eq("id", id)
         .select()
         .single();
 
       if (error) throw new Error(error.message);
+
+      // If steps were provided, update flow_steps table
+      if (steps && Array.isArray(steps)) {
+        // Delete existing flow steps
+        await ctx.supabase
+          .from("flow_steps")
+          .delete()
+          .eq("lead_magnet_id", id);
+
+        // Insert new flow steps
+        if (steps.length > 0) {
+          const flowStepsToInsert = steps.map((step: any) => ({
+            lead_magnet_id: id,
+            step_number: step.step_number,
+            title: step.title,
+            description: step.description || null,
+            component_type: step.component_type,
+            config: step.config || {},
+          }));
+
+          const { error: stepsError } = await ctx.supabase
+            .from("flow_steps")
+            .insert(flowStepsToInsert);
+
+          if (stepsError) throw new Error(stepsError.message);
+        }
+      }
+
       return data;
     }),
 

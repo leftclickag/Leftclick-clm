@@ -6,6 +6,7 @@ import type { LeadMagnet } from "@/types/lead-magnet";
 import { EbookWidget } from "@/components/public/widgets/ebook-widget";
 import { ChecklistWidget } from "@/components/public/widgets/checklist-widget";
 import { CalculatorWidget } from "@/components/public/widgets/calculator-widget";
+import { QuizWidget } from "@/components/public/widgets/quiz-widget";
 import { Moon, Sun } from "lucide-react";
 
 type ThemeMode = "light" | "dark" | "system";
@@ -144,9 +145,5 @@ export function WidgetContainer({ slug, tenantId, branding }: WidgetContainerPro
       </div>
     </div>
   );
-}
-
-function QuizWidget({ leadMagnet }: { leadMagnet: LeadMagnet }) {
-  return <div>Quiz Widget für {leadMagnet.title}</div>;
 }
 

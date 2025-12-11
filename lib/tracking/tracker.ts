@@ -122,10 +122,18 @@ export class Tracker {
     if (!this.submissionId && eventType === "start") {
       this.startTime = Date.now();
 
+      // WICHTIG: Hole tenant_id vom Lead-Magnet, damit die Submission dem richtigen Tenant zugeordnet wird
+      const { data: leadMagnet } = await supabase
+        .from("lead_magnets")
+        .select("tenant_id")
+        .eq("id", leadMagnetId)
+        .single();
+
       const { data: submission } = await supabase
         .from("submissions")
         .insert({
           lead_magnet_id: leadMagnetId,
+          tenant_id: leadMagnet?.tenant_id, // KRITISCH: tenant_id setzen!
           session_id: this.sessionId,
           status: "started",
           // UTM Tracking

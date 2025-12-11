@@ -7,6 +7,13 @@ VALUES ('avatars', 'avatars', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Storage policies for avatars bucket
+-- Drop existing policies if they exist to avoid conflicts
+DROP POLICY IF EXISTS "Avatar images are publicly accessible" ON storage.objects;
+DROP POLICY IF EXISTS "Users can upload their own avatar" ON storage.objects;
+DROP POLICY IF EXISTS "Users can update their own avatar" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete their own avatar" ON storage.objects;
+
+-- Recreate policies
 CREATE POLICY "Avatar images are publicly accessible"
 ON storage.objects FOR SELECT
 TO public

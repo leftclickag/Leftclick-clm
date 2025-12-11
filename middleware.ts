@@ -20,6 +20,9 @@ export async function middleware(request: NextRequest) {
     request,
   });
 
+  // Füge pathname zu Headers hinzu für Permission-Checking
+  supabaseResponse.headers.set("x-pathname", request.nextUrl.pathname);
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -59,7 +62,23 @@ export async function middleware(request: NextRequest) {
       console.log('🚫 No session, redirecting to /auth/login');
       return NextResponse.redirect(new URL("/auth/login", request.url));
     }
-    console.log('✅ User authenticated, allowing access to /admin');
+
+    // Check user role
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+
+    const userRole = userData?.role;
+    const allowedRoles = ['super_admin', 'admin', 'editor', 'user'];
+
+    if (!userRole || !allowedRoles.includes(userRole)) {
+      console.log('🚫 Insufficient permissions, user role:', userRole);
+      return NextResponse.redirect(new URL("/auth/login?error=insufficient_permissions", request.url));
+    }
+
+    console.log('✅ User authenticated with role:', userRole);
   }
 
   // Allow public widget routes

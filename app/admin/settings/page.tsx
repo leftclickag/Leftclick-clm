@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, GlowCard } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { QuickTooltip } from "@/components/ui/tooltip";
 import { 
   Settings, 
   Palette, 
@@ -13,13 +14,17 @@ import {
   Shield,
   Save,
   Plus,
-  Sparkles
+  Sparkles,
+  Activity,
+  RefreshCw
 } from "lucide-react";
 import { getSSOSettings, updateSSOSettings } from "@/app/actions/sso-settings";
 
 export default function SettingsPage() {
   const [ssoConfig, setSsoConfig] = useState({ enabled: false, clientId: "", tenantId: "" });
   const [loadingSSO, setLoadingSSO] = useState(false);
+  const [diagnostics, setDiagnostics] = useState<any>(null);
+  const [loadingDiag, setLoadingDiag] = useState(false);
 
   useEffect(() => {
     getSSOSettings().then(setSsoConfig);
@@ -36,6 +41,20 @@ export default function SettingsPage() {
       console.error("Failed to save SSO settings:", e);
     } finally {
       setLoadingSSO(false);
+    }
+  };
+
+  const runDiagnostics = async () => {
+    setLoadingDiag(true);
+    try {
+      const response = await fetch("/api/test-admin");
+      const data = await response.json();
+      setDiagnostics(data);
+    } catch (e) {
+      console.error("Failed to run diagnostics:", e);
+      setDiagnostics({ error: "Verbindungsfehler" });
+    } finally {
+      setLoadingDiag(false);
     }
   };
 
@@ -58,6 +77,99 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* System Diagnostics Card */}
+      <GlowCard className="animate-fade-in">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-blue-500/20">
+                <Activity className="h-5 w-5 text-blue-400" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">System-Diagnose</CardTitle>
+                <CardDescription>Überprüfe Supabase-Verbindung und Konfiguration</CardDescription>
+              </div>
+            </div>
+            <QuickTooltip content="System-Diagnose durchführen: Überprüft Supabase-Verbindung, Umgebungsvariablen und Konfiguration">
+              <Button 
+                onClick={runDiagnostics}
+                disabled={loadingDiag}
+                size="sm"
+                variant="outline"
+              >
+                {loadingDiag ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Activity className="h-4 w-4 mr-2" />
+                    Test starten
+                  </>
+                )}
+              </Button>
+            </QuickTooltip>
+          </div>
+        </CardHeader>
+        {diagnostics && (
+          <CardContent className="space-y-4">
+            {/* Environment */}
+            <div className="space-y-2">
+              <h3 className="font-semibold text-sm text-muted-foreground">Umgebungsvariablen</h3>
+              <div className="space-y-1 text-sm">
+                {Object.entries(diagnostics.environment).map(([key, value]) => (
+                  <div key={key} className="flex justify-between items-center py-1 px-3 rounded-lg bg-secondary/30">
+                    <span className="font-mono text-xs">{key}</span>
+                    <span className={value?.toString().includes("✅") ? "text-emerald-400" : "text-red-400"}>
+                      {value as string}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Tests */}
+            <div className="space-y-2">
+              <h3 className="font-semibold text-sm text-muted-foreground">Verbindungstests</h3>
+              <div className="space-y-1 text-sm">
+                {Object.entries(diagnostics.tests).map(([key, value]) => (
+                  <div key={key} className="flex justify-between items-center py-1 px-3 rounded-lg bg-secondary/30">
+                    <span className="capitalize">{key.replace(/([A-Z])/g, " $1").trim()}</span>
+                    <span className={value?.toString().includes("✅") ? "text-emerald-400" : "text-red-400"}>
+                      {value as string}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Error & Solution */}
+            {diagnostics.error && diagnostics.solution && (
+              <div className="p-4 rounded-xl border border-red-500/30 bg-red-500/10">
+                <h3 className="font-semibold text-red-400 mb-2">Problem: {diagnostics.solution.problem}</h3>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  {diagnostics.solution.steps.map((step: string, i: number) => (
+                    <div key={i}>{step}</div>
+                  ))}
+                  {diagnostics.solution.note && (
+                    <div className="mt-2 pt-2 border-t border-red-500/30 text-red-400">
+                      {diagnostics.solution.note}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {!diagnostics.error && (
+              <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10">
+                <div className="flex items-center gap-2 text-emerald-400">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="font-semibold">Alle Tests erfolgreich!</span>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        )}
+      </GlowCard>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Branding Card */}
@@ -112,10 +224,12 @@ export default function SettingsPage() {
                 />
               </div>
             </div>
-            <Button className="w-full mt-2">
-              <Save className="mr-2 h-4 w-4" />
-              Speichern
-            </Button>
+            <QuickTooltip content="Branding-Einstellungen speichern">
+              <Button className="w-full mt-2">
+                <Save className="mr-2 h-4 w-4" />
+                Speichern
+              </Button>
+            </QuickTooltip>
           </CardContent>
         </GlowCard>
 
@@ -151,10 +265,12 @@ export default function SettingsPage() {
               <Label htmlFor="smtpUser" className="text-sm text-muted-foreground">Benutzer</Label>
               <Input id="smtpUser" placeholder="user@example.com" />
             </div>
-            <Button className="w-full mt-2">
-              <Save className="mr-2 h-4 w-4" />
-              Speichern
-            </Button>
+            <QuickTooltip content="SMTP-Einstellungen speichern für automatischen E-Mail-Versand">
+              <Button className="w-full mt-2">
+                <Save className="mr-2 h-4 w-4" />
+                Speichern
+              </Button>
+            </QuickTooltip>
           </CardContent>
         </GlowCard>
 
@@ -190,10 +306,12 @@ export default function SettingsPage() {
                 ))}
               </div>
             </div>
-            <Button variant="outline" className="w-full mt-2">
-              <Plus className="mr-2 h-4 w-4" />
-              Webhook hinzufügen
-            </Button>
+            <QuickTooltip content="Neuen Webhook hinzufügen für Event-Benachrichtigungen">
+              <Button variant="outline" className="w-full mt-2">
+                <Plus className="mr-2 h-4 w-4" />
+                Webhook hinzufügen
+              </Button>
+            </QuickTooltip>
           </CardContent>
         </GlowCard>
 
@@ -242,23 +360,25 @@ export default function SettingsPage() {
                 </p>
               </div>
             )}
-            <Button 
-              className="w-full mt-2" 
-              onClick={handleSaveSSO}
-              disabled={loadingSSO}
-            >
-              {loadingSSO ? (
-                <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Speichern...
-                </div>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Speichern
-                </>
-              )}
-            </Button>
+            <QuickTooltip content="SSO-Konfiguration speichern und Microsoft 365 Login aktivieren">
+              <Button 
+                className="w-full mt-2" 
+                onClick={handleSaveSSO}
+                disabled={loadingSSO}
+              >
+                {loadingSSO ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Speichern...
+                  </div>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Speichern
+                  </>
+                )}
+              </Button>
+            </QuickTooltip>
           </CardContent>
         </GlowCard>
       </div>

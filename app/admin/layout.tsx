@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AdminSidebar } from "@/components/admin/sidebar";
+import { checkRoutePermission } from "@/lib/permissions/route-guards";
+import { headers } from "next/headers";
 
 export default async function AdminLayout({
   children,
@@ -14,6 +16,18 @@ export default async function AdminLayout({
 
   if (!user) {
     redirect("/auth/login");
+  }
+
+  // Prüfe Berechtigungen für die aktuelle Route
+  const headersList = await headers();
+  const pathname = headersList.get("x-pathname") || "";
+  
+  // Wenn pathname gesetzt ist, prüfe Berechtigung
+  if (pathname && pathname !== "/admin") {
+    const hasPermission = await checkRoutePermission(pathname);
+    if (!hasPermission) {
+      redirect("/admin");
+    }
   }
 
   return (

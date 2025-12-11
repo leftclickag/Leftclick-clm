@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Trophy, Star, Zap, Target, Medal, PartyPopper } from "lucide-react";
+import { Trophy, Star, Zap, Target, Medal, PartyPopper, Info } from "lucide-react";
 import confetti from "canvas-confetti";
+import { QuickTooltip } from "@/components/ui/tooltip";
 
 // ============================================
 // PROGRESS BAR WITH ANIMATIONS
