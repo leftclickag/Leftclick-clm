@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, GlowCard } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LeadMagnetBuilder } from "@/components/admin/lead-magnet-builder";
 import { CalculatorBuilder } from "@/components/admin/calculator-builder";
 import { VisualWizardBuilder } from "@/components/admin/visual-wizard-builder";
@@ -34,7 +35,10 @@ import {
   Sigma,
   DollarSign,
   BarChart3,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Layout,
+  Palette,
+  Wand2
 } from "lucide-react";
 
 type ThemeMode = "light" | "dark" | "system";
@@ -213,8 +217,41 @@ export function EditLeadMagnetForm({ leadMagnet }: EditLeadMagnetFormProps) {
     pink: { bg: "bg-pink-500/20", text: "text-pink-400", border: "border-pink-500/30", ring: "ring-pink-500/50" },
   };
 
+  // Tab-Konfiguration basierend auf Typ
+  const getTabs = () => {
+    const baseTabs = [
+      { value: "general", label: "Allgemein", icon: Layout },
+      { value: "appearance", label: "Darstellung", icon: Palette },
+    ];
+
+    if (type === "calculator") {
+      return [
+        ...baseTabs,
+        { value: "variables", label: "Preise & Variablen", icon: DollarSign },
+        { value: "calculations", label: "Berechnungen", icon: Sigma },
+        { value: "wizard", label: "Wizard-Builder", icon: Wand2 },
+        { value: "charts", label: "Diagramme", icon: BarChart3 },
+        { value: "settings", label: "Einstellungen", icon: SettingsIcon },
+      ];
+    } else if (type === "checklist" || type === "quiz") {
+      return [
+        ...baseTabs,
+        { value: "wizard", label: "Wizard-Schritte", icon: Sparkles },
+      ];
+    } else if (type === "ebook") {
+      return [
+        ...baseTabs,
+        { value: "ebook", label: "E-Book Optionen", icon: BookOpen },
+      ];
+    }
+
+    return baseTabs;
+  };
+
+  const tabs = getTabs();
+
   return (
-    <div className="space-y-8 max-w-4xl">
+    <div className="space-y-6 w-full">
       {/* Header */}
       <div className="animate-fade-in">
         <Button 
@@ -252,440 +289,474 @@ export function EditLeadMagnetForm({ leadMagnet }: EditLeadMagnetFormProps) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Type Selection */}
-        <GlowCard className="animate-fade-in" style={{ animationDelay: "0.1s" }}>
-          <CardHeader className="pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-purple-500/20">
-                <Zap className="h-5 w-5 text-purple-400" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">Typ auswählen</CardTitle>
-                <CardDescription>Wähle die Art deines Lead-Magnets</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              {typeOptions.map((option) => {
-                const colors = colorClasses[option.color as keyof typeof colorClasses];
-                const isSelected = type === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setType(option.value as any)}
-                    className={`group relative flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-300 ${
-                      isSelected
-                        ? `${colors.border} ${colors.bg} ring-2 ${colors.ring}`
-                        : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
-                    }`}
-                  >
-                    <div className={`p-3 rounded-xl ${isSelected ? colors.bg : "bg-white/10"} transition-colors`}>
-                      <option.icon className={`h-6 w-6 ${isSelected ? colors.text : "text-muted-foreground group-hover:text-white"} transition-colors`} />
+        {/* Tabs Navigation */}
+        <Tabs defaultValue="general" className="w-full">
+          <TabsList className="flex flex-wrap w-full mb-6">
+            {tabs.map((tab) => (
+              <TabsTrigger key={tab.value} value={tab.value} className="flex items-center gap-2">
+                <tab.icon className="h-4 w-4" />
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {/* Tab: Allgemein */}
+          <TabsContent value="general" className="space-y-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              {/* Type Selection */}
+              <GlowCard className="animate-fade-in h-fit">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-purple-500/20">
+                      <Zap className="h-5 w-5 text-purple-400" />
                     </div>
-                    <span className={`font-medium ${isSelected ? "text-white" : "text-muted-foreground group-hover:text-white"} transition-colors`}>
-                      {option.label}
-                    </span>
-                    {isSelected && (
-                      <div className={`absolute top-2 right-2 w-2 h-2 rounded-full ${colors.text.replace("text-", "bg-")} animate-pulse`} />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </CardContent>
-        </GlowCard>
-
-        {/* Basic Info */}
-        <GlowCard className="animate-fade-in" style={{ animationDelay: "0.2s" }}>
-          <CardHeader className="pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-cyan-500/20">
-                <FileText className="h-5 w-5 text-cyan-400" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">Grundinformationen</CardTitle>
-                <CardDescription>Basis-Daten für deinen Lead-Magnet</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="space-y-3">
-              <Label className="text-sm text-muted-foreground">Titel</Label>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="z.B. IT-Frust bei Dienstleisterwechsel"
-                required
-              />
-            </div>
-            <div className="space-y-3">
-              <Label className="text-sm text-muted-foreground">Beschreibung</Label>
-              <Input
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Kurze Beschreibung des Lead-Magnets"
-              />
-            </div>
-            <div className="space-y-3">
-              <Label className="text-sm text-muted-foreground">URL-Slug</Label>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground font-mono">/widget/</span>
-                <Input
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  placeholder="it-frust-dienstleisterwechsel"
-                  required
-                  className="font-mono"
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-4 rounded-xl border border-white/10 bg-white/5">
-              <input
-                type="checkbox"
-                id="active"
-                checked={active}
-                onChange={(e) => setActive(e.target.checked)}
-                className="h-5 w-5 rounded border-white/20 bg-white/10 text-purple-500 focus:ring-purple-500/50"
-              />
-              <div>
-                <Label htmlFor="active" className="font-medium cursor-pointer">Aktiv</Label>
-                <p className="text-xs text-muted-foreground">Lead-Magnet ist öffentlich verfügbar</p>
-              </div>
-            </div>
-          </CardContent>
-        </GlowCard>
-
-        {/* Theme Selection */}
-        <GlowCard className="animate-fade-in" style={{ animationDelay: "0.3s" }}>
-          <CardHeader className="pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-pink-500/20">
-                <Sun className="h-5 w-5 text-pink-400" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">Darstellung</CardTitle>
-                <CardDescription>Wähle das Erscheinungsbild für dein Widget</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              {[
-                { value: "light", label: "Hell", icon: Sun, gradient: "from-amber-400 to-orange-400" },
-                { value: "dark", label: "Dunkel", icon: Moon, gradient: "from-slate-600 to-slate-800" },
-                { value: "system", label: "System", icon: Monitor, gradient: "from-purple-500 to-cyan-500" },
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setThemeMode(option.value as ThemeMode)}
-                  className={`group flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all duration-300 ${
-                    themeMode === option.value
-                      ? "border-purple-500/50 bg-purple-500/10 ring-2 ring-purple-500/30"
-                      : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
-                  }`}
-                >
-                  <div className={`p-4 rounded-xl bg-gradient-to-br ${option.gradient}`}>
-                    <option.icon className="h-6 w-6 text-white" />
+                    <div>
+                      <CardTitle className="text-lg">Typ auswählen</CardTitle>
+                      <CardDescription>Wähle die Art deines Lead-Magnets</CardDescription>
+                    </div>
                   </div>
-                  <span className={`text-sm font-medium ${themeMode === option.value ? "text-white" : "text-muted-foreground"}`}>
-                    {option.label}
-                  </span>
-                </button>
-              ))}
-            </div>
-            <p className="mt-4 text-sm text-muted-foreground text-center">
-              {themeMode === "light" && "Das Widget wird immer im hellen Modus angezeigt."}
-              {themeMode === "dark" && "Das Widget wird immer im dunklen Modus angezeigt."}
-              {themeMode === "system" && "Das Widget passt sich automatisch an die Systemeinstellungen des Besuchers an."}
-            </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    {typeOptions.map((option) => {
+                      const colors = colorClasses[option.color as keyof typeof colorClasses];
+                      const isSelected = type === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => setType(option.value as any)}
+                          className={`group relative flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-300 ${
+                            isSelected
+                              ? `${colors.border} ${colors.bg} ring-2 ${colors.ring}`
+                              : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
+                          }`}
+                        >
+                          <div className={`p-3 rounded-xl ${isSelected ? colors.bg : "bg-white/10"} transition-colors`}>
+                            <option.icon className={`h-6 w-6 ${isSelected ? colors.text : "text-muted-foreground group-hover:text-white"} transition-colors`} />
+                          </div>
+                          <span className={`font-medium ${isSelected ? "text-white" : "text-muted-foreground group-hover:text-white"} transition-colors`}>
+                            {option.label}
+                          </span>
+                          {isSelected && (
+                            <div className={`absolute top-2 right-2 w-2 h-2 rounded-full ${colors.text.replace("text-", "bg-")} animate-pulse`} />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </GlowCard>
 
-            {/* User Theme Toggle Option */}
-            <div className="mt-6 pt-6 border-t border-white/10">
-              <div className="flex items-center gap-4 p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors">
-                <input
-                  type="checkbox"
-                  id="allowUserThemeToggle"
-                  checked={allowUserThemeToggle}
-                  onChange={(e) => setAllowUserThemeToggle(e.target.checked)}
-                  className="h-5 w-5 rounded border-white/20 bg-white/10 text-purple-500 focus:ring-purple-500/50"
-                />
-                <div className="p-2 rounded-lg bg-white/10">
-                  <ToggleRight className="h-4 w-4 text-purple-400" />
-                </div>
-                <div className="flex-1">
-                  <Label htmlFor="allowUserThemeToggle" className="font-medium cursor-pointer">
-                    Besucher dürfen Theme wechseln
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    Zeigt einen Theme-Toggle-Button im Widget an, mit dem Besucher selbst zwischen Hell/Dunkel wechseln können
-                  </p>
-                </div>
-              </div>
+              {/* Basic Info */}
+              <GlowCard className="animate-fade-in h-fit">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-cyan-500/20">
+                      <FileText className="h-5 w-5 text-cyan-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Grundinformationen</CardTitle>
+                      <CardDescription>Basis-Daten für deinen Lead-Magnet</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <div className="space-y-3">
+                    <Label className="text-sm text-muted-foreground">Titel</Label>
+                    <Input
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="z.B. IT-Frust bei Dienstleisterwechsel"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-sm text-muted-foreground">Beschreibung</Label>
+                    <Input
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Kurze Beschreibung des Lead-Magnets"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-sm text-muted-foreground">URL-Slug</Label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground font-mono">/widget/</span>
+                      <Input
+                        value={slug}
+                        onChange={(e) => setSlug(e.target.value)}
+                        placeholder="it-frust-dienstleisterwechsel"
+                        required
+                        className="font-mono"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-4 rounded-xl border border-white/10 bg-white/5">
+                    <input
+                      type="checkbox"
+                      id="active"
+                      checked={active}
+                      onChange={(e) => setActive(e.target.checked)}
+                      className="h-5 w-5 rounded border-white/20 bg-white/10 text-purple-500 focus:ring-purple-500/50"
+                    />
+                    <div>
+                      <Label htmlFor="active" className="font-medium cursor-pointer">Aktiv</Label>
+                      <p className="text-xs text-muted-foreground">Lead-Magnet ist öffentlich verfügbar</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </GlowCard>
             </div>
+          </TabsContent>
 
-            {/* Expert Mode Toggle (nur für Kalkulatoren) */}
-            {type === "calculator" && (
-              <div className="mt-4 pt-4 border-t border-white/10">
-                <div className="flex items-center gap-4 p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors">
-                  <input
-                    type="checkbox"
-                    id="expertModeEnabled"
-                    checked={leadMagnetSettings.expertModeEnabled}
-                    onChange={(e) =>
-                      setLeadMagnetSettings({
-                        ...leadMagnetSettings,
-                        expertModeEnabled: e.target.checked,
-                      })
-                    }
-                    className="h-5 w-5 rounded border-white/20 bg-white/10 text-cyan-500 focus:ring-cyan-500/50"
+          {/* Tab: Darstellung */}
+          <TabsContent value="appearance" className="space-y-6">
+            <GlowCard className="animate-fade-in">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-pink-500/20">
+                    <Sun className="h-5 w-5 text-pink-400" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Darstellung</CardTitle>
+                    <CardDescription>Wähle das Erscheinungsbild für dein Widget</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4 max-w-2xl">
+                  {[
+                    { value: "light", label: "Hell", icon: Sun, gradient: "from-amber-400 to-orange-400" },
+                    { value: "dark", label: "Dunkel", icon: Moon, gradient: "from-slate-600 to-slate-800" },
+                    { value: "system", label: "System", icon: Monitor, gradient: "from-purple-500 to-cyan-500" },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setThemeMode(option.value as ThemeMode)}
+                      className={`group flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all duration-300 ${
+                        themeMode === option.value
+                          ? "border-purple-500/50 bg-purple-500/10 ring-2 ring-purple-500/30"
+                          : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
+                      }`}
+                    >
+                      <div className={`p-4 rounded-xl bg-gradient-to-br ${option.gradient}`}>
+                        <option.icon className="h-6 w-6 text-white" />
+                      </div>
+                      <span className={`text-sm font-medium ${themeMode === option.value ? "text-white" : "text-muted-foreground"}`}>
+                        {option.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-4 text-sm text-muted-foreground">
+                  {themeMode === "light" && "Das Widget wird immer im hellen Modus angezeigt."}
+                  {themeMode === "dark" && "Das Widget wird immer im dunklen Modus angezeigt."}
+                  {themeMode === "system" && "Das Widget passt sich automatisch an die Systemeinstellungen des Besuchers an."}
+                </p>
+
+                {/* User Theme Toggle Option */}
+                <div className="mt-6 pt-6 border-t border-white/10">
+                  <div className="flex items-center gap-4 p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors max-w-2xl">
+                    <input
+                      type="checkbox"
+                      id="allowUserThemeToggle"
+                      checked={allowUserThemeToggle}
+                      onChange={(e) => setAllowUserThemeToggle(e.target.checked)}
+                      className="h-5 w-5 rounded border-white/20 bg-white/10 text-purple-500 focus:ring-purple-500/50"
+                    />
+                    <div className="p-2 rounded-lg bg-white/10">
+                      <ToggleRight className="h-4 w-4 text-purple-400" />
+                    </div>
+                    <div className="flex-1">
+                      <Label htmlFor="allowUserThemeToggle" className="font-medium cursor-pointer">
+                        Besucher dürfen Theme wechseln
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Zeigt einen Theme-Toggle-Button im Widget an, mit dem Besucher selbst zwischen Hell/Dunkel wechseln können
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expert Mode Toggle (nur für Kalkulatoren) */}
+                {type === "calculator" && (
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    <div className="flex items-center gap-4 p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors max-w-2xl">
+                      <input
+                        type="checkbox"
+                        id="expertModeEnabled"
+                        checked={leadMagnetSettings.expertModeEnabled}
+                        onChange={(e) =>
+                          setLeadMagnetSettings({
+                            ...leadMagnetSettings,
+                            expertModeEnabled: e.target.checked,
+                          })
+                        }
+                        className="h-5 w-5 rounded border-white/20 bg-white/10 text-cyan-500 focus:ring-cyan-500/50"
+                      />
+                      <div className="p-2 rounded-lg bg-white/10">
+                        <Zap className="h-4 w-4 text-cyan-400" />
+                      </div>
+                      <div className="flex-1">
+                        <Label htmlFor="expertModeEnabled" className="font-medium cursor-pointer">
+                          Experten-Modus aktivieren
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          Besucher können zwischen Schnell-Modus (nur Pflichtfelder) und Experten-Modus (alle Felder) wählen
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </GlowCard>
+          </TabsContent>
+
+          {/* Tab: Preise & Variablen (nur Calculator) */}
+          {type === "calculator" && (
+            <TabsContent value="variables" className="space-y-6">
+              <GlowCard className="animate-fade-in">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-emerald-500/20">
+                      <DollarSign className="h-5 w-5 text-emerald-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Preise & Variablen</CardTitle>
+                      <CardDescription>Verwalten Sie alle Preise und Konstanten zentral</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <PriceVariableManager
+                    variables={priceVariables}
+                    calculations={calculatorConfig.calculations}
+                    onChange={setPriceVariables}
                   />
-                  <div className="p-2 rounded-lg bg-white/10">
-                    <Zap className="h-4 w-4 text-cyan-400" />
+                </CardContent>
+              </GlowCard>
+            </TabsContent>
+          )}
+
+          {/* Tab: Berechnungen (nur Calculator) */}
+          {type === "calculator" && (
+            <TabsContent value="calculations" className="space-y-6">
+              <GlowCard className="animate-fade-in">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-purple-500/20">
+                      <Sigma className="h-5 w-5 text-purple-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Berechnungen & Ausgaben</CardTitle>
+                      <CardDescription>Definiere Formeln und Ergebnis-Ausgaben</CardDescription>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <Label htmlFor="expertModeEnabled" className="font-medium cursor-pointer">
-                      Experten-Modus aktivieren
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      Besucher können zwischen Schnell-Modus (nur Pflichtfelder) und Experten-Modus (alle Felder) wählen
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </GlowCard>
-
-        {/* Preis- und Variablen-Manager */}
-        {type === "calculator" && (
-          <GlowCard className="animate-fade-in" style={{ animationDelay: "0.4s" }}>
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-emerald-500/20">
-                  <DollarSign className="h-5 w-5 text-emerald-400" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg">Preise & Variablen</CardTitle>
-                  <CardDescription>Verwalten Sie alle Preise und Konstanten zentral</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <PriceVariableManager
-                variables={priceVariables}
-                calculations={calculatorConfig.calculations}
-                onChange={setPriceVariables}
-              />
-            </CardContent>
-          </GlowCard>
-        )}
-
-        {/* Calculator Config - Berechnungen */}
-        {type === "calculator" && (
-          <GlowCard className="animate-fade-in" style={{ animationDelay: "0.45s" }}>
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-purple-500/20">
-                  <Sigma className="h-5 w-5 text-purple-400" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg">Berechnungen & Ausgaben</CardTitle>
-                  <CardDescription>Definiere Formeln und Ergebnis-Ausgaben</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <CalculatorBuilder
-                initialConfig={calculatorConfig}
-                onChange={(newConfig) => setCalculatorConfig(newConfig)}
-              />
-            </CardContent>
-          </GlowCard>
-        )}
-
-        {/* Visual Wizard Builder - NEU für Kalkulatoren */}
-        {type === "calculator" && (
-          <GlowCard className="animate-fade-in" style={{ animationDelay: "0.5s" }}>
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-amber-500/20">
-                  <Sparkles className="h-5 w-5 text-amber-400" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg">Wizard-Builder</CardTitle>
-                  <CardDescription>Erstellen Sie Schritte mit Drag & Drop und Live-Preview</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <VisualWizardBuilder
-                initialSteps={wizardSteps}
-                calculations={calculatorConfig.calculations}
-                priceVariables={priceVariables}
-                onChange={setWizardSteps}
-              />
-            </CardContent>
-          </GlowCard>
-        )}
-
-        {/* Wizard Config - Schritte (für Checklist/Quiz) */}
-        {(type === "checklist" || type === "quiz") && (
-          <GlowCard className="animate-fade-in" style={{ animationDelay: "0.5s" }}>
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-amber-500/20">
-                  <Sparkles className="h-5 w-5 text-amber-400" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg">Wizard-Schritte</CardTitle>
-                  <CardDescription>Erstelle Schritt-für-Schritt-Flows für die Dateneingabe</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <LeadMagnetBuilder
-                initialSteps={config.steps || []}
-                onSave={(steps) => {
-                  setConfig((prev) => ({ ...prev, steps }));
-                }}
-              />
-            </CardContent>
-          </GlowCard>
-        )}
-
-        {/* Diagramm-Builder */}
-        {type === "calculator" && (
-          <GlowCard className="animate-fade-in" style={{ animationDelay: "0.55s" }}>
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-cyan-500/20">
-                  <BarChart3 className="h-5 w-5 text-cyan-400" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg">Diagramme</CardTitle>
-                  <CardDescription>Visualisieren Sie Ihre Ergebnisse mit Diagrammen</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <ChartBuilder
-                charts={leadMagnetSettings.charts}
-                calculations={calculatorConfig.calculations}
-                onChange={(charts) =>
-                  setLeadMagnetSettings({ ...leadMagnetSettings, charts })
-                }
-              />
-            </CardContent>
-          </GlowCard>
-        )}
-
-        {/* Lead-Magnet Settings */}
-        {type === "calculator" && (
-          <GlowCard className="animate-fade-in" style={{ animationDelay: "0.6s" }}>
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-blue-500/20">
-                  <SettingsIcon className="h-5 w-5 text-blue-400" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg">Einstellungen</CardTitle>
-                  <CardDescription>E-Mail, PDF, Kontaktdaten-Gate und mehr</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <LeadMagnetSettings
-                settings={leadMagnetSettings}
-                onChange={setLeadMagnetSettings}
-              />
-            </CardContent>
-          </GlowCard>
-        )}
-
-        {/* E-Book Config */}
-        {type === "ebook" && (
-          <GlowCard className="animate-fade-in" style={{ animationDelay: "0.4s" }}>
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-emerald-500/20">
-                  <BookOpen className="h-5 w-5 text-emerald-400" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg">E-Book Konfiguration</CardTitle>
-                  <CardDescription>Optionen für den E-Book Download</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {[
-                { id: "requireContactInfo", label: "Kontaktinformationen erforderlich", description: "Besucher müssen ihre E-Mail angeben", icon: UserPlus },
-                { id: "emailDelivery", label: "Per E-Mail versenden", description: "E-Book wird automatisch zugesendet", icon: Mail },
-                { id: "instantDownload", label: "Sofortiger Download", description: "Direkter Download ohne Wartezeit", icon: Download },
-              ].map((option) => (
-                <div 
-                  key={option.id}
-                  className="flex items-center gap-4 p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
-                >
-                  <input
-                    type="checkbox"
-                    id={option.id}
-                    checked={config[option.id] || false}
-                    onChange={(e) =>
-                      setConfig((prev) => ({
-                        ...prev,
-                        [option.id]: e.target.checked,
-                      }))
-                    }
-                    className="h-5 w-5 rounded border-white/20 bg-white/10 text-emerald-500 focus:ring-emerald-500/50"
+                </CardHeader>
+                <CardContent>
+                  <CalculatorBuilder
+                    initialConfig={calculatorConfig}
+                    onChange={(newConfig) => setCalculatorConfig(newConfig)}
                   />
-                  <div className="p-2 rounded-lg bg-white/10">
-                    <option.icon className="h-4 w-4 text-emerald-400" />
-                  </div>
-                  <div className="flex-1">
-                    <Label htmlFor={option.id} className="font-medium cursor-pointer">{option.label}</Label>
-                    <p className="text-xs text-muted-foreground">{option.description}</p>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </GlowCard>
-        )}
+                </CardContent>
+              </GlowCard>
+            </TabsContent>
+          )}
 
-        {/* Actions */}
-        <div className="flex justify-end gap-4 pt-4 animate-fade-in" style={{ animationDelay: "0.5s" }}>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-            size="lg"
-          >
-            Abbrechen
-          </Button>
-          <Button 
-            type="submit" 
-            variant="glow"
-            size="lg"
-            disabled={updateMutation.isPending}
-            className="min-w-[150px]"
-          >
-            {updateMutation.isPending ? (
-              <div className="flex items-center gap-2">
-                <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Wird gespeichert...
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Save className="h-4 w-4" />
-                Speichern
-              </div>
-            )}
-          </Button>
+          {/* Tab: Wizard-Builder (Calculator) */}
+          {type === "calculator" && (
+            <TabsContent value="wizard" className="space-y-6">
+              <GlowCard className="animate-fade-in">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-amber-500/20">
+                      <Sparkles className="h-5 w-5 text-amber-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Wizard-Builder</CardTitle>
+                      <CardDescription>Erstellen Sie Schritte mit Drag & Drop und Live-Preview</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <VisualWizardBuilder
+                    initialSteps={wizardSteps}
+                    calculations={calculatorConfig.calculations}
+                    priceVariables={priceVariables}
+                    onChange={setWizardSteps}
+                  />
+                </CardContent>
+              </GlowCard>
+            </TabsContent>
+          )}
+
+          {/* Tab: Wizard-Schritte (Checklist/Quiz) */}
+          {(type === "checklist" || type === "quiz") && (
+            <TabsContent value="wizard" className="space-y-6">
+              <GlowCard className="animate-fade-in">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-amber-500/20">
+                      <Sparkles className="h-5 w-5 text-amber-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Wizard-Schritte</CardTitle>
+                      <CardDescription>Erstelle Schritt-für-Schritt-Flows für die Dateneingabe</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <LeadMagnetBuilder
+                    initialSteps={config.steps || []}
+                    onSave={(steps) => {
+                      setConfig((prev) => ({ ...prev, steps }));
+                    }}
+                  />
+                </CardContent>
+              </GlowCard>
+            </TabsContent>
+          )}
+
+          {/* Tab: Diagramme (nur Calculator) */}
+          {type === "calculator" && (
+            <TabsContent value="charts" className="space-y-6">
+              <GlowCard className="animate-fade-in">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-cyan-500/20">
+                      <BarChart3 className="h-5 w-5 text-cyan-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Diagramme</CardTitle>
+                      <CardDescription>Visualisieren Sie Ihre Ergebnisse mit Diagrammen</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ChartBuilder
+                    charts={leadMagnetSettings.charts}
+                    calculations={calculatorConfig.calculations}
+                    onChange={(charts) =>
+                      setLeadMagnetSettings({ ...leadMagnetSettings, charts })
+                    }
+                  />
+                </CardContent>
+              </GlowCard>
+            </TabsContent>
+          )}
+
+          {/* Tab: Einstellungen (nur Calculator) */}
+          {type === "calculator" && (
+            <TabsContent value="settings" className="space-y-6">
+              <GlowCard className="animate-fade-in">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-blue-500/20">
+                      <SettingsIcon className="h-5 w-5 text-blue-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Einstellungen</CardTitle>
+                      <CardDescription>E-Mail, PDF, Kontaktdaten-Gate und mehr</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <LeadMagnetSettings
+                    settings={leadMagnetSettings}
+                    onChange={setLeadMagnetSettings}
+                  />
+                </CardContent>
+              </GlowCard>
+            </TabsContent>
+          )}
+
+          {/* Tab: E-Book Optionen */}
+          {type === "ebook" && (
+            <TabsContent value="ebook" className="space-y-6">
+              <GlowCard className="animate-fade-in">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-emerald-500/20">
+                      <BookOpen className="h-5 w-5 text-emerald-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">E-Book Konfiguration</CardTitle>
+                      <CardDescription>Optionen für den E-Book Download</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {[
+                    { id: "requireContactInfo", label: "Kontaktinformationen erforderlich", description: "Besucher müssen ihre E-Mail angeben", icon: UserPlus },
+                    { id: "emailDelivery", label: "Per E-Mail versenden", description: "E-Book wird automatisch zugesendet", icon: Mail },
+                    { id: "instantDownload", label: "Sofortiger Download", description: "Direkter Download ohne Wartezeit", icon: Download },
+                  ].map((option) => (
+                    <div 
+                      key={option.id}
+                      className="flex items-center gap-4 p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors max-w-2xl"
+                    >
+                      <input
+                        type="checkbox"
+                        id={option.id}
+                        checked={config[option.id] || false}
+                        onChange={(e) =>
+                          setConfig((prev) => ({
+                            ...prev,
+                            [option.id]: e.target.checked,
+                          }))
+                        }
+                        className="h-5 w-5 rounded border-white/20 bg-white/10 text-emerald-500 focus:ring-emerald-500/50"
+                      />
+                      <div className="p-2 rounded-lg bg-white/10">
+                        <option.icon className="h-4 w-4 text-emerald-400" />
+                      </div>
+                      <div className="flex-1">
+                        <Label htmlFor={option.id} className="font-medium cursor-pointer">{option.label}</Label>
+                        <p className="text-xs text-muted-foreground">{option.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </GlowCard>
+            </TabsContent>
+          )}
+        </Tabs>
+
+        {/* Actions - Sticky am unteren Rand */}
+        <div className="sticky bottom-0 bg-background/80 backdrop-blur-lg border-t border-white/10 -mx-6 px-6 py-4 mt-6">
+          <div className="flex justify-end gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+              size="lg"
+            >
+              Abbrechen
+            </Button>
+            <Button 
+              type="submit" 
+              variant="glow"
+              size="lg"
+              disabled={updateMutation.isPending}
+              className="min-w-[150px]"
+            >
+              {updateMutation.isPending ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Wird gespeichert...
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Save className="h-4 w-4" />
+                  Speichern
+                </div>
+              )}
+            </Button>
+          </div>
         </div>
       </form>
     </div>
   );
 }
-

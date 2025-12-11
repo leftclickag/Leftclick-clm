@@ -8,6 +8,7 @@ export { Input } from "./input";
 export { Label } from "./label";
 export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
 export { Slider } from "./slider";
+export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
 
 // New Spicy Components
 export { CommandPalette, useCommandPalette } from "./command-palette";
