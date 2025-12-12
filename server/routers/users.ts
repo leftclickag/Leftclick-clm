@@ -13,7 +13,7 @@ async function checkAdminPermission(userId: string): Promise<boolean> {
     .eq("id", userId)
     .single();
 
-  return data && ["admin", "super_admin"].includes(data.role);
+  return !!data && ["admin", "super_admin"].includes(data.role);
 }
 
 // Prüfe ob User Super-Admin ist

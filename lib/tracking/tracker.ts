@@ -112,7 +112,14 @@ export class Tracker {
   }
 
   async trackEvent(
-    eventType: "start" | "step_view" | "step_complete" | "abandon" | "conversion",
+    eventType:
+      | "start"
+      | "step_view"
+      | "step_complete"
+      | "step_skipped"
+      | "contact_submitted"
+      | "abandon"
+      | "conversion",
     leadMagnetId: string,
     metadata?: Record<string, any>
   ) {

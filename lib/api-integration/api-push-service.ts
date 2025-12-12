@@ -13,6 +13,8 @@ interface ApiIntegration {
   retry_enabled: boolean;
   retry_max_attempts: number;
   retry_delay_seconds: number;
+  success_count?: number | null;
+  error_count?: number | null;
 }
 
 interface LeadData {
@@ -134,7 +136,7 @@ class ApiPushService {
           .from("api_integrations")
           .update({
             last_success_at: new Date().toISOString(),
-            success_count: integration.success_count + 1,
+            success_count: (integration.success_count ?? 0) + 1,
           })
           .eq("id", integration.id);
       } else {
@@ -143,7 +145,7 @@ class ApiPushService {
           .update({
             last_error_at: new Date().toISOString(),
             last_error_message: `HTTP ${response.status}: ${response.statusText}`,
-            error_count: integration.error_count + 1,
+            error_count: (integration.error_count ?? 0) + 1,
           })
           .eq("id", integration.id);
 
@@ -180,7 +182,7 @@ class ApiPushService {
         .update({
           last_error_at: new Date().toISOString(),
           last_error_message: errorMessage,
-          error_count: integration.error_count + 1,
+          error_count: (integration.error_count ?? 0) + 1,
         })
         .eq("id", integration.id);
 

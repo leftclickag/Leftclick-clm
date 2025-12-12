@@ -3,9 +3,9 @@ import { router, adminProcedure } from "../trpc";
 import { apiPushService } from "@/lib/api-integration/api-push-service";
 
 // Validation Schemas
-const authConfigSchema = z.record(z.any());
+const authConfigSchema = z.record(z.string(), z.any());
 
-const dataMappingSchema = z.record(z.any());
+const dataMappingSchema = z.record(z.string(), z.any());
 
 const apiIntegrationSchema = z.object({
   name: z.string().min(1).max(255),
@@ -15,10 +15,10 @@ const apiIntegrationSchema = z.object({
   http_method: z.enum(["POST", "PUT", "PATCH"]).default("POST"),
   auth_type: z.enum(["none", "bearer", "api_key", "basic", "custom"]).default("none"),
   auth_config: authConfigSchema.default({}),
-  headers: z.record(z.string()).default({}),
+  headers: z.record(z.string(), z.string()).default({}),
   data_mapping: dataMappingSchema,
   trigger_on: z.array(z.string()).default(["lead.completed"]),
-  filter_conditions: z.record(z.any()).default({}),
+  filter_conditions: z.record(z.string(), z.any()).default({}),
   lead_magnet_ids: z.array(z.string().uuid()).optional().nullable(),
   retry_enabled: z.boolean().default(true),
   retry_max_attempts: z.number().int().min(1).max(10).default(3),
@@ -85,7 +85,7 @@ export const apiIntegrationsRouter = router({
       const { data: userData } = await ctx.supabase
         .from("users")
         .select("tenant_id")
-        .eq("id", ctx.userId)
+        .eq("id", ctx.user.id)
         .single();
 
       if (!userData?.tenant_id) {
@@ -97,7 +97,7 @@ export const apiIntegrationsRouter = router({
         .insert({
           ...input,
           tenant_id: userData.tenant_id,
-          created_by: ctx.userId,
+          created_by: ctx.user.id,
         })
         .select()
         .single();

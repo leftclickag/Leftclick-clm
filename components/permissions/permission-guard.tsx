@@ -223,7 +223,7 @@ function getDefaultPermissions(role: UserRole): Permission[] {
       'dashboard.view',
       'lead_magnets.view', 'lead_magnets.create', 'lead_magnets.edit', 'lead_magnets.delete',
       'leads.view', 'leads.export', 'leads.delete',
-      'analytics.view', 'analytics.extended',
+      'analytics.view', 'analytics.advanced',
       'integrations.view', 'integrations.create', 'integrations.edit', 'integrations.delete',
       'users.view', 'users.create', 'users.edit', 'users.delete',
       'permissions.view', 'permissions.edit',
@@ -243,6 +243,12 @@ function getDefaultPermissions(role: UserRole): Permission[] {
       'analytics.view',
     ],
     viewer: [
+      'dashboard.view',
+      'lead_magnets.view',
+      'leads.view',
+      'analytics.view',
+    ],
+    user: [
       'dashboard.view',
       'lead_magnets.view',
       'leads.view',

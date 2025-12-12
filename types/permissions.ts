@@ -1,7 +1,7 @@
 /**
  * Rollen im System
  */
-export type UserRole = 'super_admin' | 'admin' | 'user';
+export type UserRole = 'super_admin' | 'admin' | 'editor' | 'viewer' | 'user';
 
 /**
  * Verfügbare Berechtigungen (Permissions)
@@ -147,6 +147,24 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'analytics.view',
     'profile.view',
     'profile.edit',
+  ],
+  editor: [
+    // Editor: Inhalte bearbeiten, aber keine Admin-User/Permissions
+    'dashboard.view',
+    'lead_magnets.view',
+    'lead_magnets.edit',
+    'leads.view',
+    'analytics.view',
+    'profile.view',
+    'profile.edit',
+  ],
+  viewer: [
+    // Viewer: nur lesen
+    'dashboard.view',
+    'lead_magnets.view',
+    'leads.view',
+    'analytics.view',
+    'profile.view',
   ],
 };
 

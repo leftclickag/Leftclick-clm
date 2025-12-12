@@ -23,7 +23,7 @@ async function checkAdminPermission(userId: string): Promise<boolean> {
     .eq("user_id", userId)
     .single();
 
-  return userRole && ["admin", "super_admin"].includes(userRole.role);
+  return !!userRole && ["admin", "super_admin"].includes(userRole.role);
 }
 
 export const inviteCodesRouter = router({

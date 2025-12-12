@@ -72,7 +72,7 @@ export const permissionsRouter = router({
     );
 
     // Erstelle vollständige Liste mit Defaults
-    const roles: UserRole[] = ['super_admin', 'admin', 'user'];
+    const roles: UserRole[] = ['super_admin', 'admin', 'editor', 'viewer', 'user'];
     const result = roles.map(role => {
       const config = configs.find(c => c.role === role);
       return {
@@ -91,7 +91,7 @@ export const permissionsRouter = router({
    */
   updateRolePermissions: publicProcedure
     .input(z.object({
-      role: z.enum(['super_admin', 'admin', 'user']),
+      role: z.enum(['super_admin', 'admin', 'editor', 'viewer', 'user']),
       permissions: z.array(z.string()),
     }))
     .mutation(async ({ input }) => {
@@ -136,7 +136,7 @@ export const permissionsRouter = router({
    */
   resetToDefault: publicProcedure
     .input(z.object({
-      role: z.enum(['super_admin', 'admin', 'user']),
+      role: z.enum(['super_admin', 'admin', 'editor', 'viewer', 'user']),
     }))
     .mutation(async ({ input }) => {
       // Prüfe Berechtigung

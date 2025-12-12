@@ -98,6 +98,8 @@ export default function PermissionsPage() {
     const names: Record<UserRole, string> = {
       super_admin: 'Super Admin',
       admin: 'Admin',
+      editor: 'Editor',
+      viewer: 'Viewer',
       user: 'Benutzer',
     };
     return names[role];
@@ -107,6 +109,8 @@ export default function PermissionsPage() {
     const colors: Record<UserRole, string> = {
       super_admin: 'from-purple-600 to-pink-600',
       admin: 'from-blue-600 to-cyan-600',
+      editor: 'from-amber-600 to-orange-600',
+      viewer: 'from-slate-600 to-gray-600',
       user: 'from-green-600 to-emerald-600',
     };
     return colors[role];

@@ -24,8 +24,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import type { LeadMagnet } from "@/types/lead-magnet";
 import type { FlowStep } from "@/types/lead-magnet";
-import type { CalculatorConfig } from "@/types/lead-magnet";
-import type { WizardStep, WizardField } from "@/types/wizard-builder";
+import type { CalculatorConfig as EngineCalculatorConfig } from "@/types/lead-magnet";
+import type {
+  ContactGateSettings,
+  LeadMagnetSettings,
+  WizardBuilderConfig,
+  WizardStep,
+  WizardField,
+} from "@/types/wizard-builder";
 import { CalculationEngine } from "@/lib/calculator/calculation-engine";
 import { allPriceTables } from "@/lib/calculator/price-tables";
 import { ToggleLeft, ToggleRight, SkipForward, Eye, EyeOff } from "lucide-react";
@@ -49,10 +55,13 @@ export function CalculatorWidget({ leadMagnet }: CalculatorWidgetProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   // Settings aus Config
-  const config = (leadMagnet.config as CalculatorConfig) || {};
-  const settings = config.settings || {};
+  type CalculatorWidgetConfig = EngineCalculatorConfig &
+    Partial<Omit<WizardBuilderConfig, "calculations" | "outputs">>;
+
+  const config = (leadMagnet.config as CalculatorWidgetConfig) || {};
+  const settings = (config.settings as Partial<LeadMagnetSettings> | undefined) || {};
   const expertModeEnabled = settings.expertModeEnabled ?? true;
-  const contactGateSettings = settings.contactGate || {
+  const contactGateSettings: ContactGateSettings = settings.contactGate || {
     required: true,
     fields: ["name", "email"],
     teaserType: "blurred_total",
@@ -65,11 +74,15 @@ export function CalculatorWidget({ leadMagnet }: CalculatorWidgetProps) {
 
   // Initialisiere Berechnungs-Engine
   useEffect(() => {
-    const config = (leadMagnet.config as CalculatorConfig) || {};
-    const engine = new CalculationEngine({
-      ...config,
+    const cfg = (leadMagnet.config as CalculatorWidgetConfig) || {};
+    const engineConfig: EngineCalculatorConfig = {
+      variables: cfg.variables,
       priceTables: allPriceTables,
-    });
+      calculations: cfg.calculations ?? [],
+      conditions: cfg.conditions ?? [],
+      outputs: cfg.outputs ?? [],
+    };
+    const engine = new CalculationEngine(engineConfig);
     setCalculationEngine(engine);
   }, [leadMagnet.config]);
 
@@ -679,7 +692,7 @@ export function CalculatorWidget({ leadMagnet }: CalculatorWidgetProps) {
   }
 
   if (completed && results) {
-    const config = (leadMagnet.config as CalculatorConfig) || {};
+    const config = (leadMagnet.config as EngineCalculatorConfig) || {};
     const outputs = config.outputs || [];
 
     return (
