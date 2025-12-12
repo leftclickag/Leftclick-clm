@@ -60,3 +60,4 @@ LEFT JOIN tenants t ON u.tenant_id = t.id
 WHERE u.email = 'ihre-email@example.com';
 
 
+

@@ -403,3 +403,4 @@ Mögliche Erweiterungen für die Zukunft:
 - [ ] Automatische API-Discovery
 
 
+

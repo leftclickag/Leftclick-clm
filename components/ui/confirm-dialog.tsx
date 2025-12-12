@@ -150,9 +150,10 @@ interface SimpleConfirmDialogProps {
   type?: DialogType;
   confirmText?: string;
   cancelText?: string;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   onCancel?: () => void;
   confirmVariant?: "default" | "destructive" | "outline" | "ghost";
+  loading?: boolean;
 }
 
 export function ConfirmDialog({
@@ -166,6 +167,7 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
   confirmVariant,
+  loading = false,
 }: SimpleConfirmDialogProps) {
   const handleCancel = () => {
     onOpenChange(false);
@@ -218,14 +220,15 @@ export function ConfirmDialog({
           <p className="text-muted-foreground">{description}</p>
         </DialogBody>
         <DialogFooter className="gap-3">
-          <Button variant="outline" onClick={handleCancel}>
+          <Button variant="outline" onClick={handleCancel} disabled={loading}>
             {cancelText}
           </Button>
           <Button
             variant={confirmVariant || (type === "delete" ? "destructive" : "default")}
             onClick={handleConfirm}
+            disabled={loading}
           >
-            {confirmText}
+            {loading ? "Wird ausgeführt..." : confirmText}
           </Button>
         </DialogFooter>
       </DialogContent>

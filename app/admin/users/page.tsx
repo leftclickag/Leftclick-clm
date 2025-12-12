@@ -192,9 +192,9 @@ export default function UsersPage() {
         }
         title="Rolle ändern?"
         description={`Möchtest du die Rolle wirklich zu "${roleChangeConfirm.newRole}" ändern?`}
-        confirmLabel="Rolle ändern"
-        cancelLabel="Abbrechen"
-        variant="warning"
+        confirmText="Rolle ändern"
+        cancelText="Abbrechen"
+        type="warning"
         onConfirm={confirmRoleChange}
         loading={updateRole.isPending}
       />
@@ -206,9 +206,9 @@ export default function UsersPage() {
         }
         title="Benutzer löschen?"
         description={`Möchtest du den Benutzer "${deleteConfirm.email}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`}
-        confirmLabel="Löschen"
-        cancelLabel="Abbrechen"
-        variant="danger"
+        confirmText="Löschen"
+        cancelText="Abbrechen"
+        type="delete"
         onConfirm={confirmDeleteUser}
         loading={deleteUser.isPending}
       />

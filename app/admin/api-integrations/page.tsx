@@ -131,9 +131,9 @@ export default function ApiIntegrationsPage() {
         }
         title="Integration löschen?"
         description={`Möchtest du die Integration "${deleteConfirm.name}" wirklich löschen?`}
-        confirmLabel="Löschen"
-        cancelLabel="Abbrechen"
-        variant="danger"
+        confirmText="Löschen"
+        cancelText="Abbrechen"
+        type="delete"
         onConfirm={confirmDelete}
         loading={deleteMutation.isPending}
       />

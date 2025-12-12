@@ -53,3 +53,4 @@ Die Migration führt folgende Änderungen durch:
 5. Das Bild wird automatisch hochgeladen und gespeichert
 
 
+

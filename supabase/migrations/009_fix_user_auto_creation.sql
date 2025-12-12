@@ -75,3 +75,4 @@ COMMENT ON FUNCTION public.handle_new_user IS
 'Erstellt automatisch einen Eintrag in der users-Tabelle wenn sich ein neuer Benutzer registriert';
 
 
+

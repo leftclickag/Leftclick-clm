@@ -51,3 +51,4 @@ WHERE u.email = 'm.mussler@leftclick.ch';
 -- tenant_name: LeftClick
 
 
+
