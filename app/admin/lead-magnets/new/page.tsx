@@ -78,7 +78,28 @@ export default function NewLeadMagnetPage() {
   const [themeMode, setThemeMode] = useState<ThemeMode>("system");
   
   // Calculator-spezifische Konfiguration
-  const [calculatorConfig, setCalculatorConfig] = useState({
+  type CalculatorBuilderCalculation = {
+    id: string;
+    formula: string;
+    label?: string;
+    dependsOn?: string[];
+  };
+
+  type CalculatorBuilderOutput = {
+    id: string;
+    label: string;
+    formula: string;
+    format: "currency" | "percentage" | "number" | "text";
+  };
+
+  type CalculatorConfigState = {
+    wizardMode: boolean;
+    showProgress: boolean;
+    calculations: CalculatorBuilderCalculation[];
+    outputs: CalculatorBuilderOutput[];
+  };
+
+  const [calculatorConfig, setCalculatorConfig] = useState<CalculatorConfigState>({
     wizardMode: true,
     showProgress: true,
     calculations: [],
@@ -473,7 +494,14 @@ export default function NewLeadMagnetPage() {
             <CardContent>
               <CalculatorBuilder
                 initialConfig={calculatorConfig}
-                onChange={(newConfig) => setCalculatorConfig(newConfig)}
+                onChange={(newConfig) =>
+                  setCalculatorConfig({
+                    wizardMode: newConfig.wizardMode ?? true,
+                    showProgress: newConfig.showProgress ?? true,
+                    calculations: newConfig.calculations ?? [],
+                    outputs: newConfig.outputs ?? [],
+                  })
+                }
               />
             </CardContent>
           </GlowCard>
